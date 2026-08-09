@@ -1,0 +1,108 @@
+# Agent Creator
+
+A dedicated creator for Goose custom-agent definitions stored under
+`.agents/agents/`.
+
+The source of truth is Goose's
+`guides/context-engineering/custom-agents` documentation, vendored in
+`references/custom-agents.md` for reproducible authoring and validation.
+
+## Scope
+
+| Asset | Location | Managed here? |
+|---|---|---|
+| Custom agents | `.agents/agents/`, `~/.agents/agents/` | Yes |
+| Skills | `.agents/skills/`, `~/.agents/skills/` | No — use `skill-creator` |
+| Plugins | `.agents/plugins/`, `~/.agents/plugins/` | No — use `plugin-creator` |
+| Recipes | Goose recipe locations | No — use recipe tooling |
+
+## Agent format
+
+```markdown
+---
+name: code-reviewer
+description: Reviews code for correctness, maintainability, and risk
+model: gpt-5.5
+---
+
+You are a senior code reviewer...
+```
+
+Only `name` is required. `description` and `model` are optional. The
+instruction body must be non-empty.
+
+## Create
+
+```bash
+python scripts/init_agent.py code-reviewer \
+  --path /tmp/agents \
+  --description "Reviews code for correctness and risk" \
+  --role "You are a senior code reviewer. Prioritize correctness, security, and tests."
+```
+
+## Validate
+
+```bash
+python scripts/validate_agent.py /tmp/agents/code-reviewer.md \
+  --require-filename-match
+```
+
+## Install
+
+Project scope:
+
+```bash
+python scripts/install_agent.py /tmp/agents/code-reviewer.md \
+  --project /path/to/project
+```
+
+User scope:
+
+```bash
+python scripts/install_agent.py /tmp/agents/code-reviewer.md --global
+```
+
+Existing files are not overwritten unless `--force` is supplied.
+
+## Use
+
+Start a new Goose session where the agent is discoverable, then invoke it by
+name:
+
+```text
+@code-reviewer review the current diff
+```
+
+You may also load its instructions into the current context or delegate an
+isolated task to it.
+
+## Evaluate
+
+Create an eval set, then run the specialized agent and a neutral delegated
+baseline on the same tasks:
+
+```bash
+python scripts/run_agent_eval.py \
+  --agent /path/to/code-reviewer.md \
+  --eval-set /path/to/evals.json \
+  --workspace /tmp/code-reviewer-workspace/iteration-1
+
+python scripts/grade_agent_eval.py \
+  /tmp/code-reviewer-workspace/iteration-1 \
+  --llm-grader
+
+python scripts/aggregate_benchmark.py \
+  /tmp/code-reviewer-workspace/iteration-1 \
+  --agent-name code-reviewer \
+  --agent-path /path/to/code-reviewer.md
+
+python eval-viewer/generate_review.py \
+  /tmp/code-reviewer-workspace/iteration-1 \
+  --agent-name code-reviewer \
+  --benchmark /tmp/code-reviewer-workspace/iteration-1/benchmark.json
+```
+
+For an existing agent, use `--baseline-agent old-agent.md` to compare the new
+instructions against the previous version. The evaluation preserves the custom
+agent model: tasks run through isolated delegation rather than by converting the
+agent into a skill or recipe.
