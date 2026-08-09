@@ -12,7 +12,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
-from scripts.agent_cli import AgentCli, AgentCliError
+from scripts.runners import RunnerError, create_runner
 from scripts.utils import parse_skill_md
 
 
@@ -45,16 +45,16 @@ def run_single_query(
     skill_path: str,
     timeout: int,
     model: str | None = None,
-    agent_cli: str | None = None,
+    runner: str | None = None,
 ) -> bool:
     """Run one query in an isolated project and report whether the skill loaded."""
     source = Path(skill_path).resolve()
     with tempfile.TemporaryDirectory(prefix="skill-trigger-eval-") as tmp:
         project_root = Path(tmp)
         _, skill_name = _copy_skill(source, project_root)
-        process = AgentCli.from_value(agent_cli).start_stream(query, model, project_root)
+        process = create_runner(runner).start_stream(query, model, project_root)
         if process.stdout is None:
-            raise AgentCliError("Agent CLI did not expose stdout")
+            raise RunnerError("Runner did not expose stdout")
 
         start_time = time.time()
         buffer = ""
@@ -80,14 +80,14 @@ def run_single_query(
                         event = json.loads(line)
                     except json.JSONDecodeError:
                         continue
-                    decision = AgentCli.from_value(agent_cli).event_loaded_skill(event, skill_name)
+                    decision = create_runner(runner).event_loaded_skill(event, skill_name)
                     if decision is not None:
                         return decision
 
             if buffer.strip():
                 try:
                     event = json.loads(buffer)
-                    decision = AgentCli.from_value(agent_cli).event_loaded_skill(event, skill_name)
+                    decision = create_runner(runner).event_loaded_skill(event, skill_name)
                     if decision is not None:
                         return decision
                 except json.JSONDecodeError:
@@ -107,7 +107,7 @@ def run_eval(
     runs_per_query: int = 1,
     trigger_threshold: float = 0.5,
     model: str | None = None,
-    agent_cli: str | None = None,
+    runner: str | None = None,
     description: str | None = None,
 ) -> dict:
     """Run the full eval set and return aggregate results."""
@@ -156,7 +156,7 @@ def run_eval(
                         str(staged_skill),
                         timeout,
                         model,
-                        agent_cli,
+                        runner,
                     )
                     future_to_item[future] = item
 
@@ -205,8 +205,8 @@ def main():
     parser.add_argument("--timeout", type=int, default=60, help="Timeout per query in seconds")
     parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
     parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
-    parser.add_argument("--model", default=None, help="Model override passed to the agent CLI")
-    parser.add_argument("--agent-cli", default=None, help="Agent CLI command (default: goose or AGENT_SKILL_CREATOR_CLI)")
+    parser.add_argument("--model", default=None, help="Model override passed to the runner")
+    parser.add_argument("--runner", choices=["goose"], default=None, help="Evaluation runner (default: SKILL_CREATOR_RUNNER or goose)")
     parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     args = parser.parse_args()
 
@@ -225,9 +225,9 @@ def main():
             runs_per_query=args.runs_per_query,
             trigger_threshold=args.trigger_threshold,
             model=args.model,
-            agent_cli=args.agent_cli,
+            runner=args.runner,
         )
-    except (AgentCliError, ValueError) as error:
+    except (RunnerError, ValueError) as error:
         parser.error(str(error))
 
     if args.verbose:

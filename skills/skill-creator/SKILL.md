@@ -439,7 +439,7 @@ If the current host cannot spawn isolated subagents, run test cases sequentially
 
 ### Description optimization backend
 
-The optimization scripts use a configurable command adapter. Select it with `--agent-cli` or `AGENT_SKILL_CREATOR_CLI`; the default is `goose`. The adapter must support non-interactive prompt execution. Trigger detection is implemented for Goose stream JSON and can be extended in `scripts/agent_cli.py`; unsupported CLIs fail with a clear error rather than silently falling back to Claude-specific files.
+The optimization scripts use a configurable command adapter. Select it with `--runner` or `SKILL_CREATOR_RUNNER`; the default is `goose`. The adapter must support non-interactive prompt execution. Trigger detection is implemented for Goose stream JSON and can be extended in `scripts/runners/`; unsupported runners fail with a clear error rather than silently falling back to Claude-specific files.
 
 ## Reference files
 

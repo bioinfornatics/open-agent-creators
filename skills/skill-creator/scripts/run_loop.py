@@ -58,7 +58,7 @@ def run_loop(
     verbose: bool,
     live_report_path: Path | None = None,
     log_dir: Path | None = None,
-    agent_cli: str | None = None,
+    runner: str | None = None,
 ) -> dict:
     """Run the eval + improvement loop."""
     name, original_description, content = parse_skill_md(skill_path)
@@ -95,7 +95,7 @@ def run_loop(
             runs_per_query=runs_per_query,
             trigger_threshold=trigger_threshold,
             model=model,
-            agent_cli=agent_cli,
+            runner=runner,
         )
         eval_elapsed = time.time() - t0
 
@@ -205,7 +205,7 @@ def run_loop(
             model=model,
             log_dir=log_dir,
             iteration=iteration,
-            agent_cli=agent_cli,
+            runner=runner,
         )
         improve_elapsed = time.time() - t0
 
@@ -254,7 +254,7 @@ def main():
     parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
     parser.add_argument("--holdout", type=float, default=0.4, help="Fraction of eval set to hold out for testing (0 to disable)")
     parser.add_argument("--model", required=True, help="Model for improvement")
-    parser.add_argument("--agent-cli", default=None, help="Agent CLI command (default: goose or AGENT_SKILL_CREATOR_CLI)")
+    parser.add_argument("--runner", choices=["goose"], default=None, help="Evaluation runner (default: SKILL_CREATOR_RUNNER or goose)")
     parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     parser.add_argument("--report", default="auto", help="Generate HTML report at this path (default: 'auto' for temp file, 'none' to disable)")
     parser.add_argument("--results-dir", default=None, help="Save all outputs (results.json, report.html, log.txt) to a timestamped subdirectory here")
@@ -306,7 +306,7 @@ def main():
         verbose=args.verbose,
         live_report_path=live_report_path,
         log_dir=log_dir,
-        agent_cli=args.agent_cli,
+        runner=args.runner,
     )
 
     # Save JSON output

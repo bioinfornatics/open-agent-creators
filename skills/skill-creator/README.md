@@ -47,7 +47,7 @@ python -m scripts.run_loop \
   --verbose
 ```
 
-Use `--agent-cli "goose"` or set `AGENT_SKILL_CREATOR_CLI`. Additional hosts can be added in `scripts/agent_cli.py`; unsupported CLIs fail explicitly.
+Use `--runner goose` or set `SKILL_CREATOR_RUNNER`. Additional hosts can be added as runner modules; unsupported runners fail explicitly.
 
 ## Portable paths and scope
 

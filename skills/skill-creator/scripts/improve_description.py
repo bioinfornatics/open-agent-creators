@@ -7,7 +7,7 @@ import re
 import sys
 from pathlib import Path
 
-from scripts.agent_cli import AgentCli
+from scripts.runners import create_runner
 from scripts.utils import parse_skill_md
 
 
@@ -21,7 +21,7 @@ def improve_description(
     test_results: dict | None = None,
     log_dir: Path | None = None,
     iteration: int | None = None,
-    agent_cli: str | None = None,
+    runner: str | None = None,
 ) -> str:
     """Call the configured agent to improve the description."""
     failed_triggers = [
@@ -106,7 +106,7 @@ I'd encourage you to be creative and mix up the style in different iterations si
 
 Please respond with only the new description text in <new_description> tags, nothing else."""
 
-    text = AgentCli.from_value(agent_cli).run_text(prompt, model)
+    text = create_runner(runner).run_text(prompt, model)
 
     match = re.search(r"<new_description>(.*?)</new_description>", text, re.DOTALL)
     description = match.group(1).strip().strip('"') if match else text.strip().strip('"')
@@ -136,7 +136,7 @@ Please respond with only the new description text in <new_description> tags, not
             f"important trigger words and intent coverage. Respond with only "
             f"the new description in <new_description> tags."
         )
-        shorten_text = AgentCli.from_value(agent_cli).run_text(shorten_prompt, model)
+        shorten_text = create_runner(runner).run_text(shorten_prompt, model)
         match = re.search(r"<new_description>(.*?)</new_description>", shorten_text, re.DOTALL)
         shortened = match.group(1).strip().strip('"') if match else shorten_text.strip().strip('"')
 
@@ -162,7 +162,7 @@ def main():
     parser.add_argument("--skill-path", required=True, help="Path to skill directory")
     parser.add_argument("--history", default=None, help="Path to history JSON (previous attempts)")
     parser.add_argument("--model", required=True, help="Model for improvement")
-    parser.add_argument("--agent-cli", default=None, help="Agent CLI command (default: goose or AGENT_SKILL_CREATOR_CLI)")
+    parser.add_argument("--runner", choices=["goose"], default=None, help="Improvement runner (default: SKILL_CREATOR_RUNNER or goose)")
     parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     args = parser.parse_args()
 
@@ -190,7 +190,7 @@ def main():
         eval_results=eval_results,
         history=history,
         model=args.model,
-        agent_cli=args.agent_cli,
+        runner=args.runner,
     )
 
     if args.verbose:
