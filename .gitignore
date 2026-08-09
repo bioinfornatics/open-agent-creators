@@ -3,3 +3,6 @@ __pycache__/
 *.zip
 *.skill
 .DS_Store
+
+# Local evaluation workspaces and generated benchmark artifacts
+evaluations/
