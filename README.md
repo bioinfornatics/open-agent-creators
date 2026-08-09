@@ -18,18 +18,52 @@ that component.
 
 ## Installation
 
-Each skill is self-contained and can be installed independently:
+### Recommended: install the plugin
+
+Install all creators together from the Git repository:
+
+```bash
+goose plugin install https://github.com/bioinfornatics/open-agent-creators.git
+```
+
+Enable managed updates when desired:
+
+```bash
+goose plugin install --auto-update \
+  https://github.com/bioinfornatics/open-agent-creators.git
+```
+
+Goose imports Open Plugins skills with the plugin namespace:
+
+```text
+open-agent-creators:skill-creator
+open-agent-creators:agent-creator
+open-agent-creators:hook-creator
+open-agent-creators:plugin-creator
+```
+
+For example:
+
+```text
+Load open-agent-creators:plugin-creator and create a plugin containing a skill and a hook.
+```
+
+The plugin is the recommended distribution boundary because the creators are
+versioned together and route work between one another.
+
+### Optional: install one skill standalone
+
+Each skill remains self-contained and can still be copied independently:
 
 ```bash
 mkdir -p ~/.agents/skills
 cp -R skills/skill-creator ~/.agents/skills/skill-creator
-cp -R skills/agent-creator ~/.agents/skills/agent-creator
-cp -R skills/hook-creator ~/.agents/skills/hook-creator
-cp -R skills/plugin-creator ~/.agents/skills/plugin-creator
 ```
 
+Standalone skills keep their unqualified names, such as `skill-creator`.
 Do not make a skill depend on files outside its own directory. Cross-skill
-coordination uses the host's skill-loading mechanism by name.
+coordination uses the host's skill-loading mechanism and accepts either the
+plugin-qualified name or the standalone fallback.
 
 ## Development
 
