@@ -9,8 +9,8 @@ hooks, MCP server declarations, or combinations of these components.
 | Asset | Location | Managed here? |
 |---|---|---|
 | Plugins | `.agents/plugins/`, `~/.agents/plugins/` | Yes |
-| Standalone skills | `.agents/skills/`, `~/.agents/skills/` | No — use `open-agent-creators:skill-creator` (or standalone `skill-creator`) |
-| Standalone agents | `.agents/agents/`, `~/.agents/agents/` | No — use `open-agent-creators:agent-creator` (or standalone `agent-creator`) |
+| Standalone skills | `.agents/skills/`, `~/.agents/skills/` | No — use `skill-creator` (or standalone `skill-creator`) |
+| Standalone agents | `.agents/agents/`, `~/.agents/agents/` | No — use `agent-creator` (or standalone `agent-creator`) |
 | Repository guidance | `AGENTS.md` | No — instructions only |
 
 Bundled skills under `<plugin>/skills/` are managed because they are plugin
@@ -18,10 +18,10 @@ components. This does not make the project a general-purpose skill creator.
 
 ## Component routing
 
-- Bundled skills route to `open-agent-creators:skill-creator` (or standalone `skill-creator`).
-- Hooks and hook scripts route to `open-agent-creators:hook-creator` (or standalone `hook-creator`).
-- Standalone custom agents route to `open-agent-creators:agent-creator` (or standalone `agent-creator`).
-- Manifest, MCP, packaging, and whole-plugin validation stay in `open-agent-creators:plugin-creator` (or standalone `plugin-creator`).
+- Bundled skills route to `skill-creator` (or standalone `skill-creator`).
+- Hooks and hook scripts route to `hook-creator` (or standalone `hook-creator`).
+- Standalone custom agents route to `agent-creator` (or standalone `agent-creator`).
+- Manifest, MCP, packaging, and whole-plugin validation stay in `plugin-creator` (or standalone `plugin-creator`).
 
 The current Goose custom-agent contract uses `.agents/agents`; do not package an
 `agents/` directory unless the selected target format explicitly supports it.

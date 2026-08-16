@@ -33,19 +33,19 @@ goose plugin install --auto-update \
   https://github.com/bioinfornatics/open-agent-creators.git
 ```
 
-Goose imports Open Plugins skills with the plugin namespace:
+Goose imports Open Plugins skills by their plain skill name (no plugin-qualified prefix, per the Agent Skills and Open Plugins naming conventions):
 
 ```text
-open-agent-creators:skill-creator
-open-agent-creators:agent-creator
-open-agent-creators:hook-creator
-open-agent-creators:plugin-creator
+skill-creator
+agent-creator
+hook-creator
+plugin-creator
 ```
 
 For example:
 
 ```text
-Load open-agent-creators:plugin-creator and create a plugin containing a skill and a hook.
+Load plugin-creator and create a plugin containing a skill and a hook.
 ```
 
 The plugin is the recommended distribution boundary because the creators are
