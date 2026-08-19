@@ -29,7 +29,7 @@ The current Goose custom-agent contract uses `.agents/agents`; do not package an
 ## Create a plugin
 
 ```bash
-python scripts/init_goose_plugin.py my-plugin \
+node dist/scripts/init_goose_plugin.js my-plugin \
   --path /tmp \
   --description "Reusable Goose workflows" \
   --skill my-workflow \
@@ -39,7 +39,7 @@ python scripts/init_goose_plugin.py my-plugin \
 ## Validate
 
 ```bash
-python scripts/validate_goose_plugin.py /path/to/my-plugin
+node dist/scripts/validate_goose_plugin.js /path/to/my-plugin
 ```
 
 The validator checks:
@@ -53,7 +53,7 @@ The validator checks:
 ## Package
 
 ```bash
-python scripts/package_goose_plugin.py /path/to/my-plugin ./dist/my-plugin.zip
+node dist/scripts/package_goose_plugin.js /path/to/my-plugin ./dist/my-plugin.zip
 ```
 
 ## Installation

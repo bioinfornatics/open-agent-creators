@@ -5,12 +5,12 @@
       "label": "Creators: Check all",
       "dependsOrder": "sequence",
       "dependsOn": [
-        "Creators: Compile Python",
+        "Creators: Build all",
         "Creators: Test distribution",
         "Creators: Test agent-creator",
         "Creators: Test hook-creator",
         "Creators: Test plugin-creator",
-        "Creators: Validate skill-creator",
+        "Creators: Test skill-creator",
         "Creators: Validate Open Plugin"
       ],
       "problemMatcher": [],
@@ -20,67 +20,77 @@
       }
     },
     {
-      "label": "Creators: Compile Python",
+      "label": "Creators: Build all",
       "type": "shell",
-      "command": "python -m py_compile skills/*/scripts/*.py skills/*/tests/*.py skills/agent-creator/eval-viewer/generate_review.py tests/*.py",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": ["$python"]
-    },
-    {
-      "label": "Creators: Test distribution",
-      "type": "shell",
-      "command": "python -m unittest discover -s tests -v",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": ["$python"],
-      "group": "test"
-    },
-    {
-      "label": "Creators: Test agent-creator",
-      "type": "shell",
-      "command": "python -m unittest discover -s skills/agent-creator/tests -v",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": ["$python"],
-      "group": "test"
-    },
-    {
-      "label": "Creators: Test hook-creator",
-      "type": "shell",
-      "command": "python -m unittest discover -s skills/hook-creator/tests -v",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": ["$python"],
-      "group": "test"
-    },
-    {
-      "label": "Creators: Test plugin-creator",
-      "type": "shell",
-      "command": "python -m unittest discover -s skills/plugin-creator/tests -v",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": ["$python"],
-      "group": "test"
-    },
-    {
-      "label": "Creators: Validate skill-creator",
-      "type": "shell",
-      "command": "python skills/skill-creator/scripts/quick_validate.py skills/skill-creator",
+      "command": "for d in skills/agent-creator skills/hook-creator skills/plugin-creator skills/skill-creator; do (cd \"$d\" && npm install --no-audit --no-fund && npm run build) || exit 1; done",
       "options": {
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": []
     },
     {
+      "label": "Creators: Test distribution",
+      "type": "shell",
+      "command": "node --test tests/*.test.ts",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Creators: Test agent-creator",
+      "type": "shell",
+      "command": "npm test",
+      "options": {
+        "cwd": "${workspaceFolder}/skills/agent-creator"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Creators: Test hook-creator",
+      "type": "shell",
+      "command": "npm test",
+      "options": {
+        "cwd": "${workspaceFolder}/skills/hook-creator"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Creators: Test plugin-creator",
+      "type": "shell",
+      "command": "npm test",
+      "options": {
+        "cwd": "${workspaceFolder}/skills/plugin-creator"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Creators: Test skill-creator",
+      "type": "shell",
+      "command": "npm test",
+      "options": {
+        "cwd": "${workspaceFolder}/skills/skill-creator"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Creators: Validate skill-creator",
+      "type": "shell",
+      "command": "node dist/scripts/quick_validate.js .",
+      "options": {
+        "cwd": "${workspaceFolder}/skills/skill-creator"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Creators: Validate Open Plugin",
       "type": "shell",
-      "command": "python skills/plugin-creator/scripts/validate_goose_plugin.py .",
+      "command": "node skills/plugin-creator/dist/validate_goose_plugin.js .",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -89,43 +99,43 @@
     {
       "label": "Evaluate: Run custom agent",
       "type": "shell",
-      "command": "python skills/agent-creator/scripts/run_agent_eval.py --agent ${input:agentFile} --eval-set ${input:evalSet} --workspace ${input:evalWorkspace}",
+      "command": "node dist/scripts/run_agent_eval.js --agent ${input:agentFile} --eval-set ${input:evalSet} --workspace ${input:evalWorkspace}",
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}/skills/agent-creator"
       },
       "problemMatcher": []
     },
     {
       "label": "Evaluate: Grade custom agent",
       "type": "shell",
-      "command": "python skills/agent-creator/scripts/grade_agent_eval.py ${input:evalWorkspace} --llm-grader",
+      "command": "node dist/scripts/grade_agent_eval.js ${input:evalWorkspace} --llm-grader",
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}/skills/agent-creator"
       },
       "problemMatcher": []
     },
     {
       "label": "Evaluate: Aggregate custom agent",
       "type": "shell",
-      "command": "python skills/agent-creator/scripts/aggregate_benchmark.py ${input:evalWorkspace} --agent-name ${input:agentName} --agent-path ${input:agentFile}",
+      "command": "node dist/scripts/aggregate_benchmark.js ${input:evalWorkspace} --agent-name ${input:agentName} --agent-path ${input:agentFile}",
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}/skills/agent-creator"
       },
       "problemMatcher": []
     },
     {
       "label": "Evaluate: Review custom agent",
       "type": "shell",
-      "command": "python skills/agent-creator/eval-viewer/generate_review.py ${input:evalWorkspace} --agent-name ${input:agentName} --benchmark ${input:evalWorkspace}/benchmark.json",
+      "command": "node dist/eval-viewer/generate_review.js ${input:evalWorkspace} --agent-name ${input:agentName} --benchmark ${input:evalWorkspace}/benchmark.json",
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}/skills/agent-creator"
       },
       "problemMatcher": []
     },
     {
       "label": "Evaluate: Skill trigger set",
       "type": "shell",
-      "command": "python -m scripts.run_eval --eval-set ${input:triggerEvalSet} --skill-path ${input:skillPath} --verbose",
+      "command": "node dist/scripts/run_eval.js --eval-set ${input:triggerEvalSet} --skill-path ${input:skillPath} --verbose",
       "options": {
         "cwd": "${workspaceFolder}/skills/skill-creator"
       },

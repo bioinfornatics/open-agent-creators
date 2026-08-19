@@ -9,5 +9,5 @@ This monorepo maintains independent open-format-first creator skills, with Goose
 - Plugin-creator orchestrates but does not duplicate specialized authoring logic.
 - Treat vendored documentation in each creator's `references/` directory as its recorded source-of-truth snapshot.
 - Refresh snapshots from upstream before changing a public format contract.
-- Run all Python compilation and test commands before release.
+- Each creator is TypeScript compiled to `dist/`; run `npm run build && npm test` in each creator's directory before release, and keep runtime `node_modules` vendored (no network dependency at install time).
 - Do not mutate live `~/.agents` directories in automated tests.

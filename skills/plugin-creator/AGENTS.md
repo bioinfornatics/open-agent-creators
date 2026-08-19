@@ -8,5 +8,5 @@ This repository maintains the Goose/Open Plugins creator skill.
 - Treat hooks as executable security-sensitive code.
 - Keep Goose-specific behavior explicit and source-verified.
 - Preserve portable components when migrating another plugin ecosystem.
-- Run `python -m py_compile scripts/*.py` after Python changes.
-- Run the validator's automated tests and a package smoke test before release.
+- Run `npm run build` (TypeScript compile) after script changes.
+- Run `npm test` (validator's automated tests and a package smoke test) before release.

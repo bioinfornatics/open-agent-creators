@@ -4,4 +4,4 @@
 - Generate hooks only as plugin components.
 - Keep blocking behavior limited to PreToolUse and Stop.
 - Treat hook commands as executable, security-sensitive code.
-- Run Python compilation and tests after changes.
+- Run `npm run build && npm test` after changes.

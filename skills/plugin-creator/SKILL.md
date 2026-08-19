@@ -43,7 +43,7 @@ If a required creator is unavailable, state the limitation and follow its docume
 
    Use the local references as a fallback, not as a replacement for routing when the specialized creator is available.
 
-5. Create the plugin with `scripts/init_goose_plugin.py` when starting from scratch. Do not hand-create the basic scaffold unless the script cannot be used.
+5. Create the plugin with `dist/scripts/init_goose_plugin.js` when starting from scratch. Do not hand-create the basic scaffold unless the script cannot be used.
 
 6. Implement only the resources needed:
    - `plugin.json` at plugin root.
@@ -76,7 +76,7 @@ If a required creator is unavailable, state the limitation and follow its docume
    - Produce a compatibility table: `portable`, `adapt`, `replace`, or `unsupported`.
 
 10. Validate before delivery:
-    - Run `scripts/validate_goose_plugin.py <plugin-dir>`.
+    - Run `dist/scripts/validate_goose_plugin.js <plugin-dir>`.
     - Validate JSON syntax for `plugin.json`, `hooks/hooks.json`, and `.mcp.json` when present.
     - Validate every `SKILL.md` frontmatter and name/path consistency.
     - Run the `open-agent-creators:hook-creator` validator or its standalone fallback for hooks, then check hook event names and matcher syntax conservatively.
@@ -84,7 +84,7 @@ If a required creator is unavailable, state the limitation and follow its docume
     - Run or syntax-check bundled executable scripts when feasible.
     - If the `goose` CLI is installed, additionally run the most relevant native validation/list/install smoke checks available without mutating unrelated user configuration.
 
-11. Package the result with `scripts/package_goose_plugin.py <plugin-dir> [output.zip]` when the user requests a distributable artifact.
+11. Package the result with `dist/scripts/package_goose_plugin.js <plugin-dir> [output.zip]` when the user requests a distributable artifact.
 
 12. Deliver:
     - the plugin archive or directory,
@@ -152,8 +152,8 @@ A plugin is ready only when:
 
 ## Bundled Utilities
 
-- `scripts/init_goose_plugin.py`: create a minimal goose plugin scaffold.
-- `scripts/validate_goose_plugin.py`: statically validate manifest, Skills, hooks, MCP servers, and references.
-- `scripts/package_goose_plugin.py`: validate then create a distributable ZIP.
+- `dist/scripts/init_goose_plugin.js`: create a minimal goose plugin scaffold.
+- `dist/scripts/validate_goose_plugin.js`: statically validate manifest, Skills, hooks, MCP servers, and references.
+- `dist/scripts/package_goose_plugin.js`: validate then create a distributable ZIP.
 - `references/goose-plugin-format.md`: canonical Goose plugin layout and installation model.
 - `references/goose-hooks.md`: lifecycle hooks format and safe patterns.

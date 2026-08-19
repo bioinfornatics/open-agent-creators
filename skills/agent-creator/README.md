@@ -34,7 +34,7 @@ instruction body must be non-empty.
 ## Create
 
 ```bash
-python scripts/init_agent.py code-reviewer \
+node dist/scripts/init_agent.js code-reviewer \
   --path /tmp/agents \
   --description "Reviews code for correctness and risk" \
   --role "You are a senior code reviewer. Prioritize correctness, security, and tests."
@@ -43,7 +43,7 @@ python scripts/init_agent.py code-reviewer \
 ## Validate
 
 ```bash
-python scripts/validate_agent.py /tmp/agents/code-reviewer.md \
+node dist/scripts/validate_agent.js /tmp/agents/code-reviewer.md \
   --require-filename-match
 ```
 
@@ -52,14 +52,14 @@ python scripts/validate_agent.py /tmp/agents/code-reviewer.md \
 Project scope:
 
 ```bash
-python scripts/install_agent.py /tmp/agents/code-reviewer.md \
+node dist/scripts/install_agent.js /tmp/agents/code-reviewer.md \
   --project /path/to/project
 ```
 
 User scope:
 
 ```bash
-python scripts/install_agent.py /tmp/agents/code-reviewer.md --global
+node dist/scripts/install_agent.js /tmp/agents/code-reviewer.md --global
 ```
 
 Existing files are not overwritten unless `--force` is supplied.
@@ -82,21 +82,21 @@ Create an eval set, then run the specialized agent and a neutral delegated
 baseline on the same tasks:
 
 ```bash
-python scripts/run_agent_eval.py \
+node dist/scripts/run_agent_eval.js \
   --agent /path/to/code-reviewer.md \
   --eval-set /path/to/evals.json \
   --workspace /tmp/code-reviewer-workspace/iteration-1
 
-python scripts/grade_agent_eval.py \
+node dist/scripts/grade_agent_eval.js \
   /tmp/code-reviewer-workspace/iteration-1 \
   --llm-grader
 
-python scripts/aggregate_benchmark.py \
+node dist/scripts/aggregate_benchmark.js \
   /tmp/code-reviewer-workspace/iteration-1 \
   --agent-name code-reviewer \
   --agent-path /path/to/code-reviewer.md
 
-python eval-viewer/generate_review.py \
+node dist/eval-viewer/generate_review.js \
   /tmp/code-reviewer-workspace/iteration-1 \
   --agent-name code-reviewer \
   --benchmark /tmp/code-reviewer-workspace/iteration-1/benchmark.json

@@ -13,21 +13,21 @@ A vendor-neutral fork of Anthropic's `skill-creator`, adapted to the open [Agent
 
 ## Requirements
 
-- Python 3.10+
-- PyYAML for validation
+- Node.js 22+ (scripts are TypeScript compiled to `dist/`, with runtime `node_modules` vendored — no network access needed once installed)
 - Goose on `PATH` for trigger evaluation and description optimization, unless another adapter is implemented
 
 ## Validate and package
 
 ```bash
-python -m scripts.quick_validate /path/to/skill
-python -m scripts.package_skill /path/to/skill ./dist
+npm install && npm run build
+node dist/scripts/quick_validate.js /path/to/skill
+node dist/scripts/package_skill.js /path/to/skill ./dist-out
 ```
 
 ## Trigger evaluation
 
 ```bash
-python -m scripts.run_eval \
+node dist/scripts/run_eval.js \
   --eval-set /path/to/trigger-evals.json \
   --skill-path /path/to/skill \
   --model provider/model-id \
@@ -39,7 +39,7 @@ The eval set is a JSON array of objects with `query` and `should_trigger` fields
 ## Optimize a description
 
 ```bash
-python -m scripts.run_loop \
+node dist/scripts/run_loop.js \
   --eval-set /path/to/trigger-evals.json \
   --skill-path /path/to/skill \
   --model provider/model-id \

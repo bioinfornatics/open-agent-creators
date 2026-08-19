@@ -18,7 +18,7 @@ vendored as `references/hooks.md`.
 ## Create
 
 ```bash
-python scripts/init_hook.py /path/to/plugin PostToolUse record-tool \
+node dist/scripts/init_hook.js /path/to/plugin PostToolUse record-tool \
   --matcher 'developer__shell' \
   --timeout 10
 ```
@@ -26,7 +26,7 @@ python scripts/init_hook.py /path/to/plugin PostToolUse record-tool \
 ## Validate
 
 ```bash
-python scripts/validate_hook.py /path/to/plugin
+node dist/scripts/validate_hook.js /path/to/plugin
 ```
 
 ## Scope

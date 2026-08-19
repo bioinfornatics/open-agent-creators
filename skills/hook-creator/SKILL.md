@@ -82,7 +82,7 @@ When invoked from `plugin-creator`, return a validated hook component that can b
 8. Validate the plugin hook component:
 
    ```bash
-   python <hook-creator>/scripts/validate_hook.py <plugin-dir>
+   node <hook-creator>/dist/scripts/validate_hook.js <plugin-dir>
    ```
 
 9. Test handlers with representative payloads. Check both matching and non-matching cases, allow and deny cases for blocking hooks, missing optional fields, malformed input, and absent external dependencies.
@@ -116,5 +116,5 @@ A hook component is ready only when:
 
 - `references/hooks.md`: vendored Goose hooks documentation.
 - `references/UPSTREAM.md`: source and refresh instructions.
-- `scripts/init_hook.py`: scaffold a hook component in a plugin.
-- `scripts/validate_hook.py`: validate hook configuration and references.
+- `dist/scripts/init_hook.js`: scaffold a hook component in a plugin.
+- `dist/scripts/validate_hook.js`: validate hook configuration and references.

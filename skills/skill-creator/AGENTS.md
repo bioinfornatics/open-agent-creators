@@ -7,5 +7,5 @@ This repository maintains a portable, vendor-neutral Agent Skill Creator.
 - Do not add `.claude` paths or `CLAUDE.md` except for explicitly requested compatibility documentation.
 - Keep agent and plugin schemas host-aware; they are not part of the Agent Skills specification.
 - Keep runner-specific behavior isolated in `scripts/runners/`.
-- Run `python -m py_compile scripts/*.py eval-viewer/generate_review.py` after Python changes.
-- Run `python -m scripts.quick_validate .` after `SKILL.md` changes.
+- Run `npm run build` (TypeScript compile) after script changes.
+- Run `node dist/scripts/quick_validate.js .` after `SKILL.md` changes.

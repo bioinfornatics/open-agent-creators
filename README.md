@@ -78,11 +78,15 @@ plugin-qualified name or the standalone fallback.
 
 ## Development
 
+Each creator is a small TypeScript project compiled to plain JavaScript (`dist/`) with its
+runtime `node_modules` vendored so it works without network access once installed. Build and
+test each one from its own directory:
+
 ```bash
-python -m py_compile skills/*/scripts/*.py skills/*/tests/*.py
-python -m unittest discover -s skills/agent-creator/tests -v
-python -m unittest discover -s skills/hook-creator/tests -v
-python -m unittest discover -s skills/plugin-creator/tests -v
+cd skills/agent-creator && npm install && npm run build && npm test
+cd skills/hook-creator && npm install && npm run build && npm test
+cd skills/plugin-creator && npm install && npm run build && npm test
+cd skills/skill-creator && npm install && npm run build && npm test
 ```
 
 `skill-creator` has its own validator and packaging workflow documented in its

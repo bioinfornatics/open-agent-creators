@@ -72,14 +72,14 @@ When changing this creator, compare that reference with the current Goose docume
 7. Validate with:
 
    ```bash
-   python <agent-creator>/scripts/validate_agent.py <path/to/agent.md>
+   node <agent-creator>/dist/scripts/validate_agent.js <path/to/agent.md>
    ```
 
 8. When installing or copying an agent, use:
 
    ```bash
-   python <agent-creator>/scripts/install_agent.py <path/to/agent.md> --project <project-root>
-   python <agent-creator>/scripts/install_agent.py <path/to/agent.md> --global
+   node <agent-creator>/dist/scripts/install_agent.js <path/to/agent.md> --project <project-root>
+   node <agent-creator>/dist/scripts/install_agent.js <path/to/agent.md> --global
    ```
 
    Refuse to overwrite an existing agent unless the user explicitly requests it and `--force` is provided.
@@ -121,7 +121,7 @@ Evaluate the custom agent as a reusable role, not as a skill trigger. The key qu
 3. Run paired evaluations in isolated temporary projects:
 
    ```bash
-   python <agent-creator>/scripts/run_agent_eval.py \
+   node <agent-creator>/dist/scripts/run_agent_eval.js \
      --agent <path/to/agent.md> \
      --eval-set <path/to/evals.json> \
      --workspace <agent-name>-workspace/iteration-1
@@ -136,7 +136,7 @@ Evaluate the custom agent as a reusable role, not as a skill trigger. The key qu
 4. Grade objective assertions first. Prefix simple assertions with `contains:`, `not-contains:`, or `regex:` for deterministic grading. Use the LLM grader only for substantive semantic criteria:
 
    ```bash
-   python <agent-creator>/scripts/grade_agent_eval.py \
+   node <agent-creator>/dist/scripts/grade_agent_eval.js \
      <workspace>/iteration-1 \
      --llm-grader
    ```
@@ -144,7 +144,7 @@ Evaluate the custom agent as a reusable role, not as a skill trigger. The key qu
 5. Aggregate results:
 
    ```bash
-   python <agent-creator>/scripts/aggregate_benchmark.py \
+   node <agent-creator>/dist/scripts/aggregate_benchmark.js \
      <workspace>/iteration-1 \
      --agent-name <name> \
      --agent-path <path/to/agent.md>
@@ -153,7 +153,7 @@ Evaluate the custom agent as a reusable role, not as a skill trigger. The key qu
 6. Generate the review viewer before revising the agent:
 
    ```bash
-   python <agent-creator>/eval-viewer/generate_review.py \
+   node <agent-creator>/dist/eval-viewer/generate_review.js \
      <workspace>/iteration-1 \
      --agent-name <name> \
      --benchmark <workspace>/iteration-1/benchmark.json
@@ -218,10 +218,10 @@ An agent is ready only when:
 
 - `references/custom-agents.md`: vendored Goose custom-agents documentation.
 - `references/UPSTREAM.md`: source and refresh instructions for the reference snapshot.
-- `scripts/init_agent.py`: create a minimal agent definition.
-- `scripts/validate_agent.py`: validate agent frontmatter and body.
-- `scripts/install_agent.py`: install an agent at project or user scope.
-- `scripts/run_agent_eval.py`: run paired isolated agent and baseline evaluations.
-- `scripts/grade_agent_eval.py`: grade deterministic and semantic assertions.
-- `scripts/aggregate_benchmark.py`: aggregate pass rate, timing, and token metrics.
-- `eval-viewer/generate_review.py`: review qualitative outputs and benchmark results.
+- `dist/scripts/init_agent.js`: create a minimal agent definition.
+- `dist/scripts/validate_agent.js`: validate agent frontmatter and body.
+- `dist/scripts/install_agent.js`: install an agent at project or user scope.
+- `dist/scripts/run_agent_eval.js`: run paired isolated agent and baseline evaluations.
+- `dist/scripts/grade_agent_eval.js`: grade deterministic and semantic assertions.
+- `dist/scripts/aggregate_benchmark.js`: aggregate pass rate, timing, and token metrics.
+- `dist/eval-viewer/generate_review.js`: review qualitative outputs and benchmark results.
