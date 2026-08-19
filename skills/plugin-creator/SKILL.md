@@ -11,9 +11,9 @@ Create production-ready Goose/Open Plugins, not just example snippets. Keep the 
 
 `plugin-creator` owns architecture, the plugin root, `plugin.json`, MCP declarations, cross-component validation, installation, and packaging. Route specialized component work before implementing it:
 
-- Load `skill-creator` for every new or modified bundled skill under `<plugin>/skills/`; fall back to `skill-creator` when installed standalone.
-- Load `hook-creator` for every new or modified `hooks/hooks.json` rule or hook command script; fall back to `hook-creator` when installed standalone.
-- Load `agent-creator` only when the target host and plugin format explicitly support bundled agent components; fall back to `agent-creator` when installed standalone. Current Goose custom agents are discovered from `.agents/agents`; do not assume a plugin's `agents/` directory installs them.
+- Load `open-agent-creators:skill-creator` for every new or modified bundled skill under `<plugin>/skills/`; fall back to `skill-creator` when installed standalone.
+- Load `open-agent-creators:hook-creator` for every new or modified `hooks/hooks.json` rule or hook command script; fall back to `hook-creator` when installed standalone.
+- Load `open-agent-creators:agent-creator` only when the target host and plugin format explicitly support bundled agent components; fall back to `agent-creator` when installed standalone. Current Goose custom agents are discovered from `.agents/agents`; do not assume a plugin's `agents/` directory installs them.
 
 Prefer loading the creator instructions into the current context when assembling one plugin. Delegate only when component work is isolated into disjoint files, and never let multiple delegates modify the same plugin files concurrently.
 
@@ -37,9 +37,9 @@ If a required creator is unavailable, state the limitation and follow its docume
 3. Consult `references/goose-plugin-format.md` for the canonical directory layout, manifest rules, skill discovery, and installation commands.
 
 4. Route components to their specialized creators:
-   - load `skill-creator` (or standalone `skill-creator`) before authoring bundled skills;
-   - load `hook-creator` (or standalone `hook-creator`) before authoring hooks;
-   - load `agent-creator` (or standalone `agent-creator`) only for an explicitly supported standalone-agent target.
+   - load `open-agent-creators:skill-creator` (or standalone `skill-creator`) before authoring bundled skills;
+   - load `open-agent-creators:hook-creator` (or standalone `hook-creator`) before authoring hooks;
+   - load `open-agent-creators:agent-creator` (or standalone `agent-creator`) only for an explicitly supported standalone-agent target.
 
    Use the local references as a fallback, not as a replacement for routing when the specialized creator is available.
 
@@ -53,7 +53,7 @@ If a required creator is unavailable, state the limitation and follow its docume
    - `.mcp.json` or manifest `mcpServers` only when runtime tools are required.
    - Do not invent a standalone custom agent, recipe, MCP server, or hook when a Skill is sufficient.
 
-7. After loading `skill-creator` or its standalone fallback, for every bundled Skill:
+7. After loading `open-agent-creators:skill-creator` or its standalone fallback, for every bundled Skill:
    - Require YAML frontmatter with only `name` and `description`.
    - Keep the name lowercase and concise.
    - Put triggering conditions in `description`, not in a body section named “When to use”.
@@ -79,7 +79,7 @@ If a required creator is unavailable, state the limitation and follow its docume
     - Run `scripts/validate_goose_plugin.py <plugin-dir>`.
     - Validate JSON syntax for `plugin.json`, `hooks/hooks.json`, and `.mcp.json` when present.
     - Validate every `SKILL.md` frontmatter and name/path consistency.
-    - Run the `hook-creator` validator or its standalone fallback for hooks, then check hook event names and matcher syntax conservatively.
+    - Run the `open-agent-creators:hook-creator` validator or its standalone fallback for hooks, then check hook event names and matcher syntax conservatively.
     - Check MCP server commands, paths, environment declarations, and `${PLUGIN_ROOT}` references.
     - Run or syntax-check bundled executable scripts when feasible.
     - If the `goose` CLI is installed, additionally run the most relevant native validation/list/install smoke checks available without mutating unrelated user configuration.

@@ -4,17 +4,23 @@ An open-format-first monorepo of focused authoring skills for agent ecosystems, 
 
 ## Skills
 
-| Creator | Responsibility | Primary target |
+Goose prefixes every skill in this plugin with the plugin name (`open-agent-creators:`)
+once installed via `goose plugin install`. Skill directories and `SKILL.md` frontmatter use
+the plain, unqualified name (e.g. `skill-creator`); the table below shows the qualified name
+used to load each skill after installation.
+
+| Creator (qualified name) | Responsibility | Primary target |
 |---|---|---|
-| `skill-creator` | Agent Skills authoring and evaluation | `.agents/skills/` |
-| `agent-creator` | Reusable Goose role definitions | `.agents/agents/` |
-| `hook-creator` | Plugin lifecycle hooks and handlers | `<plugin>/hooks/` |
-| `plugin-creator` | Plugin architecture, MCP, assembly, validation, packaging | `.agents/plugins/` |
+| `open-agent-creators:skill-creator` | Agent Skills authoring and evaluation | `.agents/skills/` |
+| `open-agent-creators:agent-creator` | Reusable Goose role definitions | `.agents/agents/` |
+| `open-agent-creators:hook-creator` | Plugin lifecycle hooks and handlers | `<plugin>/hooks/` |
+| `open-agent-creators:plugin-creator` | Plugin architecture, MCP, assembly, validation, packaging | `.agents/plugins/` |
 
 `plugin-creator` is the orchestrator for plugin components. It routes bundled
 skills to `skill-creator`, hooks to `hook-creator`, and custom-agent work to
 `agent-creator` only when the target host and plugin format explicitly support
-that component.
+that component. Once installed as a plugin, load these by their qualified name
+(`open-agent-creators:plugin-creator`, etc.); a standalone copy uses the plain name.
 
 ## Installation
 
@@ -33,20 +39,25 @@ goose plugin install --auto-update \
   https://github.com/bioinfornatics/open-agent-creators.git
 ```
 
-Goose imports Open Plugins skills by their plain skill name (no plugin-qualified prefix, per the Agent Skills and Open Plugins naming conventions):
+Goose prefixes every skill in this plugin with the plugin name once it is installed via
+`goose plugin install`. Anticipate the qualified form when routing between skills or
+instructing the agent:
 
 ```text
-skill-creator
-agent-creator
-hook-creator
-plugin-creator
+open-agent-creators:skill-creator
+open-agent-creators:agent-creator
+open-agent-creators:hook-creator
+open-agent-creators:plugin-creator
 ```
 
 For example:
 
 ```text
-Load plugin-creator and create a plugin containing a skill and a hook.
+Load open-agent-creators:plugin-creator and create a plugin containing a skill and a hook.
 ```
+
+Skill directories and `SKILL.md` frontmatter `name:` stay unqualified (e.g. `name: plugin-creator`),
+per the Agent Skills specification — only the runtime-exposed, loadable name is plugin-qualified.
 
 The plugin is the recommended distribution boundary because the creators are
 versioned together and route work between one another.

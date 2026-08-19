@@ -16,9 +16,9 @@ See `references/UPSTREAM.md` when refreshing the snapshot.
 ## Scope boundary
 
 - Use this creator for `hooks/hooks.json` and hook command scripts.
-- Use `plugin-creator` (or standalone `plugin-creator`) to assemble, validate, install, or package the complete plugin.
-- Use `skill-creator` (or standalone `skill-creator`) for standalone or plugin-bundled Agent Skills.
-- Use `agent-creator` (or standalone `agent-creator`) for standalone `.agents/agents` definitions.
+- Use `open-agent-creators:plugin-creator` (or standalone `plugin-creator`) to assemble, validate, install, or package the complete plugin.
+- Use `open-agent-creators:skill-creator` (or standalone `skill-creator`) for standalone or plugin-bundled Agent Skills.
+- Use `open-agent-creators:agent-creator` (or standalone `agent-creator`) for standalone `.agents/agents` definitions.
 
 When invoked from `plugin-creator`, return a validated hook component that can be assembled into the same plugin workspace. Do not create a second, unrelated plugin root.
 
