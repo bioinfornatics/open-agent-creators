@@ -22,6 +22,35 @@ skills to `skill-creator`, hooks to `hook-creator`, and custom-agent work to
 that component. Once installed as a plugin, load these by their qualified name
 (`open-agent-creators:plugin-creator`, etc.); a standalone copy uses the plain name.
 
+## Skill Dependencies
+
+Each creator declares, in its own `SKILL.md`, exactly when it depends on another
+creator, why, and what must be true before handing work back. This keeps
+component-only tasks (e.g. "fix this one hook script") from unnecessarily
+pulling in the whole plugin workflow, while plugin-scoped tasks always route
+through the right specialist first.
+
+```text
+plugin-creator
+  ├─ depends on skill-creator   → whenever a skill is bundled under <plugin>/skills/
+  ├─ depends on hook-creator    → whenever hooks/hooks.json or a hook script changes
+  └─ depends on agent-creator   → only if the target format explicitly supports
+                                   bundled agent components (rare)
+
+skill-creator   → standalone by default; depends on plugin-creator only when the
+                   skill is bundled in a plugin, or the user asks for a plugin-level
+                   package/install rather than a standalone .skill file
+
+hook-creator    → never standalone; a hook always belongs to a plugin. Can be
+                   invoked directly to fix one hook once plugin.json already exists
+
+agent-creator   → standalone by default (.agents/agents); depends on plugin-creator
+                   only when explicitly bundling the agent inside a plugin
+```
+
+See the "Plugin Dependency" / "Skill Dependencies" section in each creator's
+`SKILL.md` for the full when/why/success-criteria table.
+
 ## Installation
 
 ### Recommended: install the plugin

@@ -7,6 +7,20 @@ description: Create and improve portable Agent Skills using the open SKILL.md fo
 
 A skill for creating new skills and iteratively improving them.
 
+## Plugin Dependency
+
+`skill-creator` works standalone whenever the task is scoped to one skill under `.agents/skills/` (or a skill you are drafting before deciding where it lives). It does not need `plugin-creator` for drafting, evaluating, benchmarking, or optimizing a skill in isolation.
+
+Depend on `open-agent-creators:plugin-creator` (fallback: standalone `plugin-creator`) only when the task is explicitly plugin-scoped:
+
+| When | Why | Success criteria before returning to plugin work |
+|---|---|---|
+| The skill is being authored as a bundled component under `<plugin>/skills/`, not a standalone `.agents/skills/` skill | `plugin-creator` owns the plugin root, manifest, and cross-component validation; a bundled skill's directory placement and its interaction with sibling skills/hooks/MCP servers in the same plugin are its call, not `skill-creator`'s | The finished `SKILL.md` is hand back with confirmation that `quick_validate` passes and (if the plugin has more than one skill or a router) triggering does not overlap with sibling skills |
+| The user asks to package the *whole plugin* (not just this one skill's `.skill` file) | `package_skill.js` only produces a standalone `.skill` archive for one skill; a plugin-level archive is `plugin-creator`'s `package_goose_plugin.js` | Route back to `plugin-creator` once the skill itself is validated — do not attempt plugin-level packaging here |
+| The user asks to install this skill as part of a plugin (not `~/.agents/skills/` or `<project>/.agents/skills/`) | Plugin installation, `plugin.json` wiring, and discovery paths are `plugin-creator`'s domain | None — hand off entirely, do not duplicate plugin installation logic here |
+
+If `plugin-creator` is unavailable when one of these cases applies, state the limitation explicitly rather than silently assembling plugin-level artifacts from this skill.
+
 At a high level, the process of creating a skill goes like this:
 
 - Decide what you want the skill to do and roughly how it should do it

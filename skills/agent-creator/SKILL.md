@@ -19,6 +19,19 @@ Do not confuse these concepts:
 
 A custom agent does not define extensions, MCP servers, scheduled jobs, recipe parameters, or a multi-step orchestration graph. If those are required, recommend a recipe or plugin instead of overloading the agent file.
 
+## Plugin Dependency
+
+`agent-creator` works standalone for its normal case: an agent under `.agents/agents/` (project) or `~/.agents/agents/` (user). Current Goose custom agents are discovered from `.agents/agents`, not from inside a plugin — most requests never need `plugin-creator` at all.
+
+Depend on `open-agent-creators:plugin-creator` (fallback: standalone `plugin-creator`) only when:
+
+| When | Why | Success criteria before returning to plugin work |
+|---|---|---|
+| The user explicitly asks to bundle this agent definition as a plugin component | Bundled-agent support is host/format-specific and `plugin-creator` is the one that confirms the target format actually installs agents from inside a plugin — do not assume a plugin's `agents/` directory is auto-discovered | `plugin-creator` has confirmed the target host/format explicitly supports bundled agent components before this creator authors anything beyond a standard `.agents/agents/` file |
+| The user asks to package or install the *whole plugin* the agent is part of | Manifest wiring, packaging, and installation are `plugin-creator`'s domain | Hand back an agent file that passes `validate_agent`; do not attempt plugin-level packaging here |
+
+If `plugin-creator` is unavailable and one of these cases applies, state the limitation explicitly rather than guessing whether the target format supports bundled agents.
+
 ## Source of truth
 
 Read `references/custom-agents.md` before creating or modifying an agent. It is a vendored snapshot of Goose's `guides/context-engineering/custom-agents` documentation and defines the supported format, paths, discovery behavior, and usage model.

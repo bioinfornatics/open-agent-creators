@@ -7,13 +7,17 @@ description: Create, adapt, validate, test, and package Goose/Open Plugins under
 
 Create production-ready Goose/Open Plugins, not just example snippets. Keep the scope strictly within `.agents/plugins`: use the skill creator for standalone `.agents/skills` and an agent creator for standalone `.agents/agents`. Prefer the smallest valid plugin architecture that satisfies the request.
 
-## Component routing
+## Skill Dependencies
 
-`plugin-creator` owns architecture, the plugin root, `plugin.json`, MCP declarations, cross-component validation, installation, and packaging. Route specialized component work before implementing it:
+`plugin-creator` owns architecture, the plugin root, `plugin.json`, MCP declarations, cross-component validation, installation, and packaging. It never authors a bundled skill's internal content, a hook script's behavior, or a standalone agent's persona itself — that work is always routed to the specialized creator listed below, before implementing it.
 
-- Load `open-agent-creators:skill-creator` for every new or modified bundled skill under `<plugin>/skills/`; fall back to `skill-creator` when installed standalone.
-- Load `open-agent-creators:hook-creator` for every new or modified `hooks/hooks.json` rule or hook command script; fall back to `hook-creator` when installed standalone.
-- Load `open-agent-creators:agent-creator` only when the target host and plugin format explicitly support bundled agent components; fall back to `agent-creator` when installed standalone. Current Goose custom agents are discovered from `.agents/agents`; do not assume a plugin's `agents/` directory installs them.
+| Skill | When to invoke | Why | Success criteria before continuing |
+|---|---|---|---|
+| `open-agent-creators:skill-creator` (fallback: standalone `skill-creator`) | Any new or modified bundled skill under `<plugin>/skills/` | `plugin-creator` does not own `SKILL.md` authoring quality, triggering-description tuning, or skill evaluation; `skill-creator` is the single source of truth for that | The bundled `SKILL.md` has valid frontmatter (`name` matches its directory, non-empty `description` under 1024 chars), passes `skill-creator`'s `quick_validate`, and — when the plugin ships more than one skill or a routing hub — has been checked for triggering overlap with sibling skills |
+| `open-agent-creators:hook-creator` (fallback: standalone `hook-creator`) | Any new or modified `hooks/hooks.json` rule or hook command script | Hook event/matcher semantics, blocking behavior, and security review of executable hook commands are `hook-creator`'s domain, not `plugin-creator`'s | `hooks/hooks.json` passes `hook-creator`'s validator with no errors, every referenced script exists and is executable, and blocking events (`PreToolUse`, `Stop`) have been reviewed for unintended side effects |
+| `open-agent-creators:agent-creator` (fallback: standalone `agent-creator`) | Only when the target host and plugin format explicitly support bundled custom-agent components — do not assume a plugin's `agents/` directory is auto-installed; current Goose custom agents are discovered from `.agents/agents`, not from a plugin | Persona/role definition quality and supported-frontmatter rules are `agent-creator`'s domain | The agent file passes `agent-creator`'s `validate_agent` and its installation path (project or user scope) has been explicitly confirmed with the user |
+
+**Dependency is task-scoped, not permanent.** A request to package, validate, or install an *entire* plugin always needs this routing (at minimum `skill-creator` if any skill is bundled). A request that only touches one component in isolation — e.g. "fix the wording in this one hook script" with no other plugin change — can stay entirely within the specialized creator without `plugin-creator` being involved at all; see that creator's own `SKILL.md` for when it works standalone.
 
 Prefer loading the creator instructions into the current context when assembling one plugin. Delegate only when component work is isolated into disjoint files, and never let multiple delegates modify the same plugin files concurrently.
 
