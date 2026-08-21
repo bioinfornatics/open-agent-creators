@@ -292,7 +292,7 @@ function globSkillFiles(root: string): string[] {
 
 function walkFiles(root: string, current: string, out: string[]) {
   for (const entry of readdirSync(current).sort()) {
-    if ([".git", "__pycache__", "node_modules", "vendor", "evaluations"].includes(entry)) continue;
+    if ([".agents", ".beads", ".claude", ".codex", ".git", "__pycache__", "node_modules", "vendor", "evaluations"].includes(entry)) continue;
     const full = join(current, entry);
     if (isDir(full)) {
       walkFiles(root, full, out);

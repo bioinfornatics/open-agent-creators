@@ -313,7 +313,7 @@ function globSkillFiles(root) {
 }
 function walkFiles(root, current, out) {
     for (const entry of readdirSync(current).sort()) {
-        if ([".git", "__pycache__", "node_modules", "vendor", "evaluations"].includes(entry))
+        if ([".agents", ".beads", ".claude", ".codex", ".git", "__pycache__", "node_modules", "vendor", "evaluations"].includes(entry))
             continue;
         const full = join(current, entry);
         if (isDir(full)) {

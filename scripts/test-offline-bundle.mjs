@@ -47,6 +47,11 @@ try {
   walk(plugin);
 
   const relative = allFiles.map((file) => path.relative(plugin, file).split(path.sep).join("/"));
+  for (const excluded of [".agents/", ".claude/", ".codex/", "evaluations/"]) {
+    if (relative.some((file) => file.startsWith(excluded))) throw new Error(`Archive contains repository-local metadata: ${excluded}`);
+  }
+  if (relative.includes("CLAUDE.md")) throw new Error("Archive contains repository-local CLAUDE.md");
+  if (!relative.includes(".vscode/tasks.json")) throw new Error("Archive is missing maintained VS Code tasks");
   if (relative.some((file) => /(^|\/)node_modules\//.test(file) && !/(^|\/)vendor\/node_modules\//.test(file))) {
     throw new Error("Archive contains development node_modules outside vendor/");
   }

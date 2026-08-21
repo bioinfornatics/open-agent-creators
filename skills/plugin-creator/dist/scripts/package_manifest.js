@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 const EXCLUDED_PARTS = new Set([".git", ".hg", ".svn", ".beads", "__pycache__", "node_modules"]);
-const ROOT_EXCLUDED_PARTS = new Set(["evaluations"]);
+const ROOT_EXCLUDED_PARTS = new Set([".agents", ".claude", ".codex", "evaluations"]);
+const ROOT_EXCLUDED_FILES = new Set(["CLAUDE.md"]);
 const EXCLUDED_SUFFIXES = new Set([".pyc", ".pyo"]);
 export function shouldExcludePackagePath(path, rootArg) {
     const root = resolve(rootArg);
@@ -10,7 +11,7 @@ export function shouldExcludePackagePath(path, rootArg) {
     if (!rel || rel === ".." || rel.startsWith(".." + sep))
         return false;
     const parts = rel.split(sep);
-    if (ROOT_EXCLUDED_PARTS.has(parts[0]))
+    if (ROOT_EXCLUDED_PARTS.has(parts[0]) || (parts.length === 1 && ROOT_EXCLUDED_FILES.has(parts[0])))
         return true;
     if (parts.some((part, index) => EXCLUDED_PARTS.has(part) && !(part === "node_modules" && parts[index - 1] === "vendor")))
         return true;
