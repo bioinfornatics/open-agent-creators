@@ -89,8 +89,26 @@ isolated task to it.
 
 ## Evaluate
 
-Create an eval set, then run the specialized agent and a neutral delegated
-baseline on the same tasks:
+Create an eval set with realistic delegated tasks and objective assertions. For
+example:
+
+```json
+{
+  "evals": [
+    {
+      "id": "typescript-auth-review",
+      "prompt": "Review the authentication changes in the supplied diff.",
+      "assertions": [
+        "Identifies the token validation risk",
+        "Proposes a concrete regression test"
+      ]
+    }
+  ]
+}
+```
+
+Then run the specialized agent and a neutral delegated baseline on exactly the
+same tasks:
 
 ```bash
 node dist/scripts/run_agent_eval.js \

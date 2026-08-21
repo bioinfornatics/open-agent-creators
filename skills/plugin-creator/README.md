@@ -58,6 +58,37 @@ The validators check:
 - `.mcp.json` and MCP server definitions;
 - plugin-relative paths and unresolved placeholders.
 
+## Evaluate a complete plugin
+
+Plugin evaluation goes beyond schema and structural validation. Load
+`agent-plugins:plugin-creator` and request an evaluation; it coordinates the
+specialized creators and requires traceable evidence before release.
+
+```text
+freeze baseline
+  → evaluate every behaviorally changed Skill
+  → run plugin integration scenarios
+  → grade paired outputs
+  → aggregate benchmark.json and benchmark.md
+  → generate the HTML review viewer
+  → verify component and plugin release gates
+```
+
+Integration scenarios should exercise routing between Skills, trigger overlap,
+hook effects, and cross-component handoffs. Every changed Skill supplies its own
+complete evaluation receipt. The plugin-level receipt records artifacts and
+human-review status. Missing execution capabilities produce
+`evaluation: blocked`; static validation or an ad-hoc comparison is not reported
+as a successful behavioral evaluation.
+
+Example Goose request:
+
+```text
+Load agent-plugins:plugin-creator and evaluate this plugin against the previous
+release. Include Skill receipts, routing and hook integration scenarios, the
+combined benchmark, release gates, and a static HTML review report.
+```
+
 ## Package
 
 ```bash

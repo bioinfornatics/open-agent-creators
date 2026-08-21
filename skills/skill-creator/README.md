@@ -39,6 +39,24 @@ node dist/scripts/quick_validate.js /path/to/skill
 node dist/scripts/package_skill.js /path/to/skill ./dist-out
 ```
 
+## Behavioral evaluation
+
+Trigger accuracy answers whether the host selects a Skill; behavioral evaluation
+answers whether using it improves the output. For an explicit evaluation request,
+the creator builds realistic cases and assertions, runs isolated
+`with_skill` and `old_skill`/`without_skill` pairs, grades every run, aggregates
+the benchmark, and generates an HTML review artifact. A complete receipt is
+required before claiming that the Skill passed or improved.
+
+```text
+Load agent-plugins:skill-creator and evaluate /path/to/skill against its previous
+version. Create scenarios and assertions, run the paired evaluation, grade and
+aggregate it, then generate a static HTML review report.
+```
+
+If a required runner, model, grader, or review capability is unavailable, the
+result is `evaluation: blocked`, with the missing capability and artifact named.
+
 ## Trigger evaluation
 
 ```bash

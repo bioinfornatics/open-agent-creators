@@ -64,6 +64,19 @@ npm run build
 npm test
 ```
 
+## Use with Goose
+
+```text
+Load agent-plugins:hook-creator and add a PostToolUse hook to /path/to/plugin
+that records shell tool usage. Validate its matcher, command, and referenced
+files, and explain any security implications.
+```
+
+A hook is evaluated through focused handler tests and, when whole-plugin
+behavior is requested, integration scenarios coordinated by
+`agent-plugins:plugin-creator`. Blocking hooks such as `PreToolUse` require an
+explicit side-effect and failure-mode review.
+
 ## Scope
 
 - Hook creation and hook-specific testing: this skill.
