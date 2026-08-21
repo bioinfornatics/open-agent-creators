@@ -16,10 +16,25 @@ A vendor-neutral fork of Anthropic's `skill-creator`, adapted to the open [Agent
 - Node.js 22+ (scripts are TypeScript compiled to `dist/`, with runtime `node_modules` vendored — no network access needed once installed)
 - Goose on `PATH` for trigger evaluation and description optimization, unless another adapter is implemented
 
-## Validate and package
+## Unified CLI
+
+Build once, then use the unified entrypoint for validation, evaluation, aggregation, review, gate verification, and packaging:
 
 ```bash
 npm install && npm run build
+node dist/scripts/cli.js validate /path/to/skill
+node dist/scripts/cli.js trigger-eval --eval-set /path/to/trigger-evals.json --skill-path /path/to/skill
+node dist/scripts/cli.js aggregate /path/to/iteration-workspace
+node dist/scripts/cli.js review /path/to/iteration-workspace --static review.html
+node dist/scripts/cli.js verify /path/to/skill --evaluation benchmark.json --human-review feedback.json
+node dist/scripts/cli.js package /path/to/skill ./dist-out
+```
+
+Every subcommand accepts `--help`, `--format text|json`, and `--quiet`. Exit codes are `0` for success, `1` for failure, `2` for invalid usage, and `3` when verification or execution is blocked. The former script entrypoints remain supported for compatibility.
+
+## Legacy validate and package entrypoints
+
+```bash
 node dist/scripts/quick_validate.js /path/to/skill
 node dist/scripts/package_skill.js /path/to/skill ./dist-out
 ```

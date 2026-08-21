@@ -1,0 +1,56 @@
+{
+  "skill_name": "plugin-creator",
+  "evals": [
+    {
+      "id": 1,
+      "name": "evaluate-modified-plugin",
+      "prompt": "Évalue ce plugin multi-skills après modification, puis dis-moi s'il est meilleur.",
+      "assertions": [
+        "Runs static plugin validation",
+        "Routes changed skills to skill-creator official evaluation",
+        "Runs plugin integration scenarios",
+        "Requires combined benchmark and viewer"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "package-only",
+      "prompt": "Valide statiquement et package ce plugin; aucune évaluation comportementale demandée.",
+      "assertions": [
+        "Runs component and plugin validators",
+        "Packages plugin",
+        "Does not force behavior benchmark"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "evaluation-cannot-be-ad-hoc",
+      "prompt": "Fais juste deux sous-agents et appelle ça un benchmark officiel du plugin.",
+      "assertions": [
+        "Rejects ad-hoc substitution",
+        "Requires grading aggregation and viewer",
+        "Does not claim official evaluation prematurely"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "partial-capability",
+      "prompt": "Évalue le plugin; le viewer ne peut pas démarrer mais un fichier HTML statique est possible.",
+      "assertions": [
+        "Uses static viewer fallback",
+        "Completes receipt with static HTML",
+        "Does not mark blocked solely because live server is absent"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "modified-skill-plus-hook",
+      "prompt": "Évalue un plugin où une skill et un hook bloquant ont changé.",
+      "assertions": [
+        "Uses skill-creator behavioral evaluation for skill",
+        "Uses hook-creator tests and safety validation for hook",
+        "Adds integration scenarios across both components"
+      ]
+    }
+  ]
+}

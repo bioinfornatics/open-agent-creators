@@ -148,3 +148,16 @@ The manifest may also declare `mcpServers` inline or provide component paths.
 Component paths must begin with `./` and remain inside the plugin. Never put
 credentials directly in the manifest or `.mcp.json`; document required
 environment variables instead.
+
+## Agent Plugins 1.0.0 schema validation
+
+The deterministic schema snapshot is stored under `references/agent-plugins-1.0.0/`.
+Validate without network access:
+
+```bash
+node dist/scripts/validate_agent_plugin_schema.js <plugin-directory> --format json
+```
+
+The validator discovers `plugin.json` and `mcp.json` or `.mcp.json`, emits stable
+JSON diagnostics, and exits 0 for valid, 1 for invalid, and 2 for usage errors.
+Schema conformance and Goose operational validation are separate required checks.

@@ -35,10 +35,11 @@ import { join, basename } from "node:path";
 import { parseArgs } from "node:util";
 
 interface Stats {
-  mean: number;
-  stddev: number;
-  min: number;
-  max: number;
+  mean: number | null;
+  stddev: number | null;
+  min: number | null;
+  max: number | null;
+  count: number;
 }
 
 interface RunResult {
@@ -48,8 +49,8 @@ interface RunResult {
   passed: number;
   failed: number;
   total: number;
-  time_seconds: number;
-  tokens?: number;
+  time_seconds: number | null;
+  tokens?: number | null;
   tool_calls?: number;
   errors?: number;
   expectations: unknown[];
@@ -62,7 +63,7 @@ function round(value: number, digits: number): number {
 }
 
 function calculateStats(values: number[]): Stats {
-  if (!values.length) return { mean: 0, stddev: 0, min: 0, max: 0 };
+  if (!values.length) return { mean: null, stddev: null, min: null, max: null, count: 0 };
   const n = values.length;
   const mean = values.reduce((a, b) => a + b, 0) / n;
   let stddev = 0;
@@ -75,6 +76,7 @@ function calculateStats(values: number[]): Stats {
     stddev: round(stddev, 4),
     min: round(Math.min(...values), 4),
     max: round(Math.max(...values), 4),
+    count: values.length,
   };
 }
 
@@ -125,9 +127,11 @@ function loadRunResults(benchmarkDir: string): Record<string, RunResult[]> {
       evalId = Number.isFinite(parsedNum) ? parsedNum : evalIdx;
     }
 
+    const configPriority = (name: string) =>
+      name.includes("with_skill") ? 0 : name.includes("old_skill") || name.includes("without_skill") ? 1 : 2;
     const configDirs = readdirSync(evalDir)
       .filter((name) => isDir(join(evalDir, name)))
-      .sort();
+      .sort((a, b) => configPriority(a) - configPriority(b) || a.localeCompare(b));
     for (const config of configDirs) {
       const configDir = join(evalDir, config);
       let runDirs = listSubdirs(configDir, "run-");
@@ -163,21 +167,21 @@ function loadRunResults(benchmarkDir: string): Record<string, RunResult[]> {
           passed: summary.passed ?? 0,
           failed: summary.failed ?? 0,
           total: summary.total ?? 0,
-          time_seconds: 0,
+          time_seconds: null,
           expectations: grading.expectations ?? [],
           notes: [],
         };
 
         const timing = grading.timing ?? {};
-        result.time_seconds = timing.total_duration_seconds ?? 0.0;
+        result.time_seconds = typeof timing.total_duration_seconds === "number" ? timing.total_duration_seconds : null;
         const timingFile = join(runDir, "timing.json");
         if (existsSync(timingFile)) {
           try {
             const timingData = JSON.parse(readFileSync(timingFile, "utf-8"));
-            if (result.time_seconds === 0.0) {
-              result.time_seconds = timingData.total_duration_seconds ?? 0.0;
+            if (result.time_seconds === null && typeof timingData.total_duration_seconds === "number") {
+              result.time_seconds = timingData.total_duration_seconds;
             }
-            result.tokens = timingData.total_tokens ?? 0;
+            result.tokens = typeof timingData.total_tokens === "number" ? timingData.total_tokens : null;
           } catch {
             // ignore malformed timing.json
           }
@@ -185,8 +189,8 @@ function loadRunResults(benchmarkDir: string): Record<string, RunResult[]> {
 
         const metrics = grading.execution_metrics ?? {};
         result.tool_calls = metrics.total_tool_calls ?? 0;
-        if (!result.tokens) {
-          result.tokens = metrics.output_chars ?? 0;
+        if (result.tokens === undefined && typeof metrics.output_chars === "number") {
+          result.tokens = metrics.output_chars;
         }
         result.errors = metrics.errors_encountered ?? 0;
 
@@ -224,15 +228,15 @@ function aggregateResults(results: Record<string, RunResult[]>): Record<string, 
     const runs = results[config] ?? [];
     if (!runs.length) {
       runSummary[config] = {
-        pass_rate: { mean: 0, stddev: 0, min: 0, max: 0 },
-        time_seconds: { mean: 0, stddev: 0, min: 0, max: 0 },
-        tokens: { mean: 0, stddev: 0, min: 0, max: 0 },
+        pass_rate: calculateStats([]),
+        time_seconds: calculateStats([]),
+        tokens: calculateStats([]),
       };
       continue;
     }
     const passRates = runs.map((r) => r.pass_rate);
-    const times = runs.map((r) => r.time_seconds);
-    const tokens = runs.map((r) => r.tokens ?? 0);
+    const times = runs.map((r) => r.time_seconds).filter((value): value is number => typeof value === "number");
+    const tokens = runs.map((r) => r.tokens).filter((value): value is number => typeof value === "number");
     runSummary[config] = {
       pass_rate: calculateStats(passRates),
       time_seconds: calculateStats(times),
@@ -244,13 +248,13 @@ function aggregateResults(results: Record<string, RunResult[]>): Record<string, 
   const baseline = configs.length >= 2 ? runSummary[configs[1]] ?? {} : {};
 
   const deltaPassRate = (primary.pass_rate?.mean ?? 0) - (baseline.pass_rate?.mean ?? 0);
-  const deltaTime = (primary.time_seconds?.mean ?? 0) - (baseline.time_seconds?.mean ?? 0);
-  const deltaTokens = (primary.tokens?.mean ?? 0) - (baseline.tokens?.mean ?? 0);
+  const deltaTime = primary.time_seconds?.mean !== null && baseline.time_seconds?.mean !== null ? primary.time_seconds.mean - baseline.time_seconds.mean : null;
+  const deltaTokens = primary.tokens?.mean !== null && baseline.tokens?.mean !== null ? primary.tokens.mean - baseline.tokens.mean : null;
 
   runSummary.delta = {
     pass_rate: `${deltaPassRate >= 0 ? "+" : ""}${deltaPassRate.toFixed(2)}`,
-    time_seconds: `${deltaTime >= 0 ? "+" : ""}${deltaTime.toFixed(1)}`,
-    tokens: `${deltaTokens >= 0 ? "+" : ""}${deltaTokens.toFixed(0)}`,
+    time_seconds: deltaTime === null ? null : `${deltaTime >= 0 ? "+" : ""}${deltaTime.toFixed(1)}`,
+    tokens: deltaTokens === null ? null : `${deltaTokens >= 0 ? "+" : ""}${deltaTokens.toFixed(0)}`,
   };
 
   return runSummary;
@@ -273,7 +277,7 @@ function generateBenchmark(benchmarkDir: string, skillName: string, skillPath: s
           failed: result.failed,
           total: result.total,
           time_seconds: result.time_seconds,
-          tokens: result.tokens ?? 0,
+          tokens: result.tokens ?? null,
           tool_calls: result.tool_calls ?? 0,
           errors: result.errors ?? 0,
         },
@@ -295,7 +299,7 @@ function generateBenchmark(benchmarkDir: string, skillName: string, skillPath: s
       analyzer_model: "<model-name>",
       timestamp: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
       evals_run: evalIds,
-      runs_per_configuration: 3,
+      runs_per_configuration: Object.fromEntries(Object.entries(results).map(([name, runs]) => [name, runs.length])),
     },
     runs,
     run_summary: runSummary,
@@ -317,7 +321,7 @@ function generateMarkdown(benchmark: any): string {
     "",
     `**Model**: ${metadata.executor_model}`,
     `**Date**: ${metadata.timestamp}`,
-    `**Evals**: ${metadata.evals_run.join(", ")} (${metadata.runs_per_configuration} runs each per configuration)`,
+    `**Evals**: ${metadata.evals_run.join(", ")} (runs per configuration: ${JSON.stringify(metadata.runs_per_configuration)})`,
     "",
     "## Summary",
     "",
@@ -337,14 +341,16 @@ function generateMarkdown(benchmark: any): string {
 
   const aTime = aSummary.time_seconds ?? {};
   const bTime = bSummary.time_seconds ?? {};
+  const formatMetric = (value: number | null | undefined, digits = 0) =>
+    value === null || value === undefined ? "n/a" : value.toFixed(digits);
   lines.push(
-    `| Time | ${(aTime.mean ?? 0).toFixed(1)}s ± ${(aTime.stddev ?? 0).toFixed(1)}s | ${(bTime.mean ?? 0).toFixed(1)}s ± ${(bTime.stddev ?? 0).toFixed(1)}s | ${delta.time_seconds ?? "—"}s |`
+    `| Time | ${formatMetric(aTime.mean, 1)}s ± ${formatMetric(aTime.stddev, 1)}s | ${formatMetric(bTime.mean, 1)}s ± ${formatMetric(bTime.stddev, 1)}s | ${delta.time_seconds ?? "—"} |`
   );
 
   const aTokens = aSummary.tokens ?? {};
   const bTokens = bSummary.tokens ?? {};
   lines.push(
-    `| Tokens | ${(aTokens.mean ?? 0).toFixed(0)} ± ${(aTokens.stddev ?? 0).toFixed(0)} | ${(bTokens.mean ?? 0).toFixed(0)} ± ${(bTokens.stddev ?? 0).toFixed(0)} | ${delta.tokens ?? "—"} |`
+    `| Tokens | ${formatMetric(aTokens.mean)} ± ${formatMetric(aTokens.stddev)} | ${formatMetric(bTokens.mean)} ± ${formatMetric(bTokens.stddev)} | ${delta.tokens ?? "—"} |`
   );
 
   if (benchmark.notes?.length) {

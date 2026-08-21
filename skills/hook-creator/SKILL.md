@@ -5,6 +5,11 @@ description: Create, edit, validate, test, and integrate Goose/Open Plugins life
 
 # Hook Creator
 
+## Offline runtime
+
+Released distributions include compiled scripts and production dependencies under `vendor/node_modules`. Run scripts from `dist/`; consumer machines need Node.js but must not run `npm install` or require network access. A missing vendor dependency is a packaging defect: report it and rebuild with the repository's `scripts/prepare-offline-bundle.mjs`.
+
+
 Create trusted Goose lifecycle hooks as components of a plugin. A hook never lives independently under `.agents/hooks`; it belongs inside a plugin discovered from `.agents/plugins/`.
 
 ## Source of truth
@@ -16,14 +21,14 @@ See `references/UPSTREAM.md` when refreshing the snapshot.
 ## Scope boundary
 
 - Use this creator for `hooks/hooks.json` and hook command scripts.
-- Use `open-agent-creators:skill-creator` (or standalone `skill-creator`) for standalone or plugin-bundled Agent Skills.
-- Use `open-agent-creators:agent-creator` (or standalone `agent-creator`) for standalone `.agents/agents` definitions.
+- Use `agent-plugins:skill-creator` (or standalone `skill-creator`) for standalone or plugin-bundled Agent Skills.
+- Use `agent-plugins:agent-creator` (or standalone `agent-creator`) for standalone `.agents/agents` definitions.
 
 ## Plugin Dependency
 
 Unlike `skill-creator`, `hook-creator` has **no standalone mode** — a hook only ever exists as a component of a plugin's `hooks/hooks.json`, never independently under `.agents/hooks`. This creator can be invoked in isolation to author or fix one hook rule/script, but the surrounding plugin must already exist (with a valid `plugin.json`) or be created first.
 
-| When to depend on `open-agent-creators:plugin-creator` (fallback: standalone `plugin-creator`) | Why | Success criteria before returning |
+| When to depend on `agent-plugins:plugin-creator` (fallback: standalone `plugin-creator`) | Why | Success criteria before returning |
 |---|---|---|
 | No `plugin.json` exists yet at the target root | A hook cannot be added to a plugin that doesn't exist; `plugin-creator` owns scaffold creation | `plugin-creator` has created a minimal `plugin.json`; only then author the hook here |
 | The user asks to validate, package, or install the *whole plugin*, not just this hook | Cross-component validation, packaging, and installation are `plugin-creator`'s domain, not this creator's | Hand back a hook component that passes this creator's own validator (`hook_format.ts`) — `plugin-creator` re-validates it as part of the full plugin, do not duplicate that step here |
@@ -124,5 +129,7 @@ A hook component is ready only when:
 
 - `references/hooks.md`: vendored Goose hooks documentation.
 - `references/UPSTREAM.md`: source and refresh instructions.
-- `dist/scripts/init_hook.js`: scaffold a hook component in a plugin.
+- `dist/cli.js`: unified `init` and `validate` CLI; supports `--format text|json`, `--quiet`, and `--help`.
+- `dist/init_hook.js`: legacy scaffold entrypoint (preserved for compatibility).
+- `dist/validate_hook.js`: legacy validation entrypoint (preserved for compatibility)._hook.js`: scaffold a hook component in a plugin.
 - `dist/scripts/validate_hook.js`: validate hook configuration and references.

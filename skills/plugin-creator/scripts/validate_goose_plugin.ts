@@ -2,6 +2,7 @@
 // Validate a Goose/Open Plugins directory without installing it.
 import { readFileSync, existsSync, statSync, readdirSync } from "node:fs";
 import { join, resolve, isAbsolute, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const NAME_RE = /^[a-z0-9](?:[a-z0-9.-]{0,62}[a-z0-9])?$/;
 const SEMVER_RE = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
@@ -10,7 +11,16 @@ const HOOK_EVENTS = new Set([
   "PreToolUse", "PostToolUse", "PostToolUseFailure",
   "BeforeReadFile", "AfterFileEdit", "BeforeShellExecution", "AfterShellExecution",
 ]);
-const MANIFEST_KEYS = new Set(["name", "version", "description", "skills", "mcpServers"]);
+const MANIFEST_KEYS = new Set(["$schema", "name", "version", "description", "author", "homepage", "repository", "license", "keywords", "extensions", "skills", "mcpServers"]);
+const PLACEHOLDER_LINE_RE = /^(?:\s*(?:#|\/\/|\/\*|\*)\s*)?(?:TODO|FIXME|TBD)\b(?:\s*[:—-]|\s+\S)/i;
+const PLACEHOLDER_VALUE_RE = /^\s*(?:["']?[\w.-]+["']?\s*[:=]\s*["']?)(?:TODO|FIXME|TBD)\b/i;
+const PLACEHOLDER_LIST_RE = /^\s*[-*+]\s+(?:TODO|FIXME|TBD)\b/i;
+
+function containsUnresolvedPlaceholder(text: string): boolean {
+  return text.split(/\r?\n/).some((line) =>
+    PLACEHOLDER_LINE_RE.test(line) || PLACEHOLDER_VALUE_RE.test(line) || PLACEHOLDER_LIST_RE.test(line)
+  );
+}
 
 function isDir(path: string): boolean {
   try {
@@ -152,48 +162,29 @@ function validateSkill(path: string, errors: string[]) {
   if (description.length > 1024) {
     errors.push(`${path}: description exceeds 1024 characters`);
   }
-  if (readFileSync(path, "utf-8").includes("TODO")) {
-    errors.push(`${path}: unresolved TODO placeholder`);
+  if (containsUnresolvedPlaceholder(readFileSync(path, "utf-8"))) {
+    errors.push(`${path}: unresolved placeholder (TODO, FIXME, or TBD)`);
   }
 }
 
-function validateMcpServer(
-  name: string,
-  server: unknown,
-  context: string,
-  root: string,
-  errors: string[]
-) {
-  if (!isPlainObject(server)) {
-    errors.push(`${context}: MCP server '${name}' must be an object`);
+function validateMcpServer(name: string, server: unknown, context: string, root: string, errors: string[]) {
+  if (!isPlainObject(server)) { errors.push(`${context}: MCP server '${name}' must be an object`); return; }
+  const transport = server.type ?? ("command" in server ? "stdio" : undefined);
+  if (!["stdio", "streamable-http", "sse"].includes(transport as string)) { errors.push(`${context}: MCP server '${name}' has an invalid transport type`); return; }
+  if (transport === "stdio") {
+    const command=server.command, args=server.args??[], env=server.env??{};
+    if(typeof command!=="string"||!command.trim()) errors.push(`${context}: MCP server '${name}' command must be non-empty for stdio`);
+    if(!Array.isArray(args)||!args.every(a=>typeof a==="string")) errors.push(`${context}: MCP server '${name}' args must be a list of strings`);
+    if(!isPlainObject(env)||!Object.values(env).every(v=>typeof v==="string")) errors.push(`${context}: MCP server '${name}' env must map strings to strings`);
+    if("cwd" in server&&typeof server.cwd!=="string") errors.push(`${context}: MCP server '${name}' cwd must be a string`);
+    if(typeof command==="string"&&command.startsWith("${PLUGIN_ROOT}/")){const relative=command.slice("${PLUGIN_ROOT}/".length).split(/\s/)[0];if(!existsSync(join(root,relative)))errors.push(`${context}: MCP server '${name}' command does not exist: ${relative}`);}
     return;
   }
-  const command = server.command;
-  if (typeof command !== "string" || !command.trim()) {
-    errors.push(`${context}: MCP server '${name}' command must be a non-empty string`);
-  }
-  const args = server.args ?? [];
-  if (!Array.isArray(args) || !args.every((a) => typeof a === "string")) {
-    errors.push(`${context}: MCP server '${name}' args must be a list of strings`);
-  }
-  const env = server.env ?? {};
-  if (
-    !isPlainObject(env) ||
-    !Object.entries(env).every(([k, v]) => typeof k === "string" && typeof v === "string")
-  ) {
-    errors.push(`${context}: MCP server '${name}' env must map strings to strings`);
-  }
-  if ("cwd" in server && typeof server.cwd !== "string") {
-    errors.push(`${context}: MCP server '${name}' cwd must be a string`);
-  }
-  if (typeof command === "string" && command.startsWith("${PLUGIN_ROOT}/")) {
-    const relative = command.slice("${PLUGIN_ROOT}/".length).split(/\s/)[0];
-    if (!existsSync(join(root, relative))) {
-      errors.push(`${context}: MCP server '${name}' command does not exist: ${relative}`);
-    }
-  }
+  const url=server.url;
+  if(typeof url!=="string"||!url.trim()) errors.push(`${context}: MCP server '${name}' url must be non-empty for ${transport}`);
+  else try { const parsed=new URL(url); if(!["http:","https:"].includes(parsed.protocol)) throw new Error("must use http or https"); } catch(error) { errors.push(`${context}: MCP server '${name}' url is invalid: ${(error as Error).message}`); }
+  const headers=server.headers??{}; if(!isPlainObject(headers)||!Object.values(headers).every(v=>typeof v==="string")) errors.push(`${context}: MCP server '${name}' headers must map strings to strings`);
 }
-
 function validateMcpDocument(value: unknown, context: string, root: string, errors: string[]) {
   if (!isPlainObject(value)) {
     errors.push(`${context}: document must be an object`);
@@ -301,7 +292,7 @@ function globSkillFiles(root: string): string[] {
 
 function walkFiles(root: string, current: string, out: string[]) {
   for (const entry of readdirSync(current).sort()) {
-    if ([".git", "__pycache__", "node_modules"].includes(entry)) continue;
+    if ([".git", "__pycache__", "node_modules", "vendor", "evaluations"].includes(entry)) continue;
     const full = join(current, entry);
     if (isDir(full)) {
       walkFiles(root, full, out);
@@ -365,13 +356,11 @@ export function validate(root: string): { errors: string[]; warnings: string[] }
     validateHooks(hooksPath, root, errors);
   }
 
-  const mcpPath = join(root, ".mcp.json");
-  if (isFile(mcpPath)) {
-    validateMcpDocument(loadJson(mcpPath, errors), ".mcp.json", root, errors);
-  }
+  const mcpPaths = [join(root, ".mcp.json"), join(root, "mcp.json")].filter(isFile);
+  for (const mcpPath of mcpPaths) validateMcpDocument(loadJson(mcpPath, errors), mcpPath.slice(root.length + 1), root, errors);
 
   const manifestHasMcp = isPlainObject(manifest) && "mcpServers" in manifest;
-  if (!skills.length && !isFile(hooksPath) && !isFile(mcpPath) && !manifestHasMcp) {
+  if (!skills.length && !isFile(hooksPath) && !mcpPaths.length && !manifestHasMcp) {
     errors.push("Plugin contains no skills, hooks, or MCP servers");
   }
 
@@ -388,7 +377,7 @@ export function validate(root: string): { errors: string[]; warnings: string[] }
     } catch {
       continue;
     }
-    if (text.includes("TODO")) {
+    if (containsUnresolvedPlaceholder(text)) {
       const relative = path.slice(root.length + 1);
       warnings.push(`Possible unresolved placeholder: ${relative}`);
     }
@@ -413,6 +402,6 @@ function main() {
   console.log(`OK: ${root}`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
   main();
 }

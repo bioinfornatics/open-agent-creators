@@ -2,7 +2,10 @@
 // Quick validation script for skills - minimal version
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import yaml from "js-yaml";
+import type yamlType from "js-yaml";
+import { loadRuntimeDependency } from "./runtime-deps.js";
+
+const yaml = loadRuntimeDependency<typeof yamlType>("js-yaml");
 
 const ALLOWED_PROPERTIES = new Set([
   "name", "description", "license", "allowed-tools", "metadata", "compatibility",
@@ -54,6 +57,9 @@ export function validateSkill(skillPath: string): [boolean, string] {
     return [false, `Name must be a string, got ${typeof rawName}`];
   }
   const name = rawName.trim();
+  if (!name) return [false, "Name must not be empty"];
+  const directoryName = skillPath.split(/[\\/]/).filter(Boolean).pop();
+  if (name !== directoryName) return [false, "Name '" + name + "' must match skill directory '" + directoryName + "'"];
   if (name) {
     if (!/^[a-z0-9-]+$/.test(name)) {
       return [false, `Name '${name}' should be kebab-case (lowercase letters, digits, and hyphens only)`];
@@ -71,6 +77,7 @@ export function validateSkill(skillPath: string): [boolean, string] {
     return [false, `Description must be a string, got ${typeof rawDescription}`];
   }
   const description = rawDescription.trim();
+  if (!description) return [false, "Description must not be empty"];
   if (description) {
     if (description.includes("<") || description.includes(">")) {
       return [false, "Description cannot contain angle brackets (< or >)"];

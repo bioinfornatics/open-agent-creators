@@ -31,6 +31,17 @@ You are a senior code reviewer...
 Only `name` is required. `description` and `model` are optional. The
 instruction body must be non-empty.
 
+## Unified CLI
+
+The package exposes **agent-creator** (mapped to dist/scripts/cli.js) with init, validate, evaluate, grade, aggregate, and install commands. The legacy compiled entrypoints remain available.
+
+    agent-creator --help
+    agent-creator init code-reviewer --path /tmp/agents
+    agent-creator validate /tmp/agents/code-reviewer.md --format json
+    agent-creator install /tmp/agents/code-reviewer.md --project /path/to/project --quiet
+
+All commands accept --format text|json, --quiet, and --help. Exit codes are 0 for success, 1 for failure, 2 for invalid usage, and 3 when an operation is blocked (for example, a refused overwrite).
+
 ## Create
 
 ```bash

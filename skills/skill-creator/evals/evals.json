@@ -1,0 +1,56 @@
+{
+  "skill_name": "skill-creator",
+  "evals": [
+    {
+      "id": 1,
+      "name": "explicit-evaluation-must-run-pipeline",
+      "prompt": "J'ai modifié cette skill. Évalue-la et prouve qu'elle est meilleure que l'ancienne version.",
+      "assertions": [
+        "Requires paired current and old-skill runs",
+        "Requires grading.json for every run",
+        "Requires aggregate_benchmark.js outputs",
+        "Requires eval-viewer/generate_review.js",
+        "Does not present quick_validate or an ad-hoc comparison as sufficient"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "static-validation-only",
+      "prompt": "Vérifie seulement que le frontmatter de cette skill est valide; ne lance pas de benchmark.",
+      "assertions": [
+        "Uses quick_validate",
+        "Does not force behavioral evaluation when explicitly excluded"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "missing-runner-blocks-honestly",
+      "prompt": "Benchmark cette skill, mais le runner d'agent est indisponible.",
+      "assertions": [
+        "Reports evaluation: blocked",
+        "Names missing paired runs and viewer artifacts",
+        "Preserves completed artifacts",
+        "Does not fabricate pass rates"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "trigger-versus-behavior",
+      "prompt": "Teste à la fois si la skill se déclenche sur les bonnes requêtes et si ses réponses sont meilleures.",
+      "assertions": [
+        "Uses run_eval or run_loop for trigger accuracy",
+        "Uses paired outputs and grading for behavior",
+        "Aggregates and generates a viewer for behavioral results"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "evaluation-receipt",
+      "prompt": "L'évaluation est terminée, fais le rapport final.",
+      "assertions": [
+        "Lists eval set, paired runs, grading, benchmark, viewer and review status",
+        "Separates completed, unavailable and blocked evidence"
+      ]
+    }
+  ]
+}

@@ -1,26 +1,26 @@
-# Open Agent Creators
+# Agent Plugins
 
 An open-format-first monorepo of focused authoring skills for agent ecosystems, with Goose as the initial reference runtime.
 
 ## Skills
 
-Goose prefixes every skill in this plugin with the plugin name (`open-agent-creators:`)
+Goose prefixes every skill in this plugin with the plugin name (`agent-plugins:`)
 once installed via `goose plugin install`. Skill directories and `SKILL.md` frontmatter use
 the plain, unqualified name (e.g. `skill-creator`); the table below shows the qualified name
 used to load each skill after installation.
 
 | Creator (qualified name) | Responsibility | Primary target |
 |---|---|---|
-| `open-agent-creators:skill-creator` | Agent Skills authoring and evaluation | `.agents/skills/` |
-| `open-agent-creators:agent-creator` | Reusable Goose role definitions | `.agents/agents/` |
-| `open-agent-creators:hook-creator` | Plugin lifecycle hooks and handlers | `<plugin>/hooks/` |
-| `open-agent-creators:plugin-creator` | Plugin architecture, MCP, assembly, validation, packaging | `.agents/plugins/` |
+| `agent-plugins:skill-creator` | Agent Skills authoring and evaluation | `.agents/skills/` |
+| `agent-plugins:agent-creator` | Reusable Goose role definitions | `.agents/agents/` |
+| `agent-plugins:hook-creator` | Plugin lifecycle hooks and handlers | `<plugin>/hooks/` |
+| `agent-plugins:plugin-creator` | Plugin architecture, MCP, assembly, validation, packaging | `.agents/plugins/` |
 
 `plugin-creator` is the orchestrator for plugin components. It routes bundled
 skills to `skill-creator`, hooks to `hook-creator`, and custom-agent work to
 `agent-creator` only when the target host and plugin format explicitly support
 that component. Once installed as a plugin, load these by their qualified name
-(`open-agent-creators:plugin-creator`, etc.); a standalone copy uses the plain name.
+(`agent-plugins:plugin-creator`, etc.); a standalone copy uses the plain name.
 
 ## Skill Dependencies
 
@@ -58,14 +58,14 @@ See the "Plugin Dependency" / "Skill Dependencies" section in each creator's
 Install all creators together from the Git repository:
 
 ```bash
-goose plugin install https://github.com/bioinfornatics/open-agent-creators.git
+goose plugin install https://github.com/bioinfornatics/agent-plugins.git
 ```
 
 Enable managed updates when desired:
 
 ```bash
 goose plugin install --auto-update \
-  https://github.com/bioinfornatics/open-agent-creators.git
+  https://github.com/bioinfornatics/agent-plugins.git
 ```
 
 Goose prefixes every skill in this plugin with the plugin name once it is installed via
@@ -73,16 +73,16 @@ Goose prefixes every skill in this plugin with the plugin name once it is instal
 instructing the agent:
 
 ```text
-open-agent-creators:skill-creator
-open-agent-creators:agent-creator
-open-agent-creators:hook-creator
-open-agent-creators:plugin-creator
+agent-plugins:skill-creator
+agent-plugins:agent-creator
+agent-plugins:hook-creator
+agent-plugins:plugin-creator
 ```
 
 For example:
 
 ```text
-Load open-agent-creators:plugin-creator and create a plugin containing a skill and a hook.
+Load agent-plugins:plugin-creator and create a plugin containing a skill and a hook.
 ```
 
 Skill directories and `SKILL.md` frontmatter `name:` stay unqualified (e.g. `name: plugin-creator`),
@@ -127,3 +127,16 @@ README.
 - Custom agents: Goose `guides/context-engineering/custom-agents`
 - Hooks: https://goose-docs.ai/docs/guides/context-engineering/hooks
 - Plugins: Goose's Open Plugins adapter and plugin documentation
+
+## Offline distribution
+
+Released plugin archives include each creator's compiled `dist/` scripts and production-only dependencies under `vendor/node_modules/`. Consumer machines need Node.js but do not need `npm install` or network access to run the shipped scripts. Development dependencies such as TypeScript and `@types/*` are not included.
+
+Prepare and verify the offline bundle before packaging or release:
+
+```bash
+npm run prepare:offline
+npm run test:offline
+```
+
+The offline smoke test packages the plugin, extracts it into an isolated temporary directory with an empty `NODE_PATH` and npm offline mode, then executes the skill validator, standalone skill packager, agent validator, plugin validator, and plugin packager from the extracted archive. Packaging fails when a creator marked `offlineBundle: true` is missing `dist/`, its vendor manifest, notices, or a declared runtime dependency.

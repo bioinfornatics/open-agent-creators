@@ -42,6 +42,7 @@ function main() {
   mkdirSync(root, { recursive: true });
 
   const manifest = {
+    $schema: "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
     name,
     version: values.version as string,
     description: (values.description as string) || `Reusable goose workflows for ${name}`,

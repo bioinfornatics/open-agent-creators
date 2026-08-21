@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -119,4 +119,39 @@ test("deterministic eval grading", () => {
   assert.equal(deterministicGrade("not-contains: safe", "unsafe change")?.passed, false);
   assert.ok(deterministicGrade("regex: risk\\s+found", "risk found")?.passed);
   assert.equal(deterministicGrade("Explains the root cause", "response"), null);
+});
+
+test("unified CLI exposes help and usage exits", () => {
+  const cli = join(DIST, "cli.js");
+  const help = execFileSync("node", [cli, "--help"], { encoding: "utf-8" });
+  assert.match(help, /Commands:/);
+  assert.match(help, /evaluate/);
+  assert.throws(() => execFileSync("node", [cli, "unknown"], { encoding: "utf-8", stdio: "pipe" }), (error: any) => error.status === 2);
+});
+
+test("unified CLI supports JSON, quiet, and blocked exit status", () => {
+  const tmp = mkdtempSync(join(tmpdir(), "agent-cli-test-"));
+  const cli = join(DIST, "cli.js");
+  try {
+    const initJson = JSON.parse(execFileSync("node", [cli, "init", "reviewer", "--path", tmp, "--format", "json"], { encoding: "utf-8" }));
+    assert.equal(initJson.ok, true);
+    assert.equal(initJson.command, "init");
+    assert.equal(initJson.exitCode, 0);
+    assert.equal(execFileSync("node", [cli, "validate", join(tmp, "reviewer.md"), "--quiet"], { encoding: "utf-8" }), "");
+    assert.throws(() => execFileSync("node", [cli, "init", "reviewer", "--path", tmp], { encoding: "utf-8", stdio: "pipe" }), (error: any) => error.status === 3);
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+});
+
+test("unified CLI main guard supports symlinks and imports without side effects", async () => {
+  const cliUrl = new URL("../dist/scripts/cli.js", import.meta.url);
+  const module = await import(cliUrl.href);
+  assert.equal(typeof module.runCli, "function");
+
+  const tmp = mkdtempSync(join(tmpdir(), "agent-cli-link-"));
+  try {
+    const link = join(tmp, "agent-creator");
+    symlinkSync(fileURLToPath(cliUrl), link);
+    const help = execFileSync("node", [link, "--help"], { encoding: "utf-8" });
+    assert.match(help, /Usage: agent-creator/);
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
 });

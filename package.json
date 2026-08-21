@@ -1,0 +1,12 @@
+{
+  "name": "agent-plugins-development",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:offline": "node scripts/prepare-offline-bundle.mjs",
+    "test:offline": "node scripts/test-offline-bundle.mjs",
+    "test:distribution": "node --test tests/test_distribution.test.ts",
+    "test": "node scripts/test.mjs",
+    "package:offline": "node scripts/package-offline.mjs"
+  }
+}

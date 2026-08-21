@@ -1,6 +1,9 @@
 // Shared parsing and validation for Goose custom-agent files.
 import { readFileSync } from "node:fs";
-import yaml from "js-yaml";
+import type yamlType from "js-yaml";
+import { loadRuntimeDependency } from "./runtime-deps.js";
+
+const yaml = loadRuntimeDependency<typeof yamlType>("js-yaml");
 
 export const ALLOWED_FIELDS = new Set(["name", "description", "model"]);
 export const NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

@@ -1,70 +1,62 @@
 #!/usr/bin/env node
-// Validate and package a Goose/Open Plugins directory.
-import { execFileSync } from "node:child_process";
-import { mkdirSync, statSync, readdirSync } from "node:fs";
-import { dirname, join, resolve, basename } from "node:path";
-import { fileURLToPath } from "node:url";
-import AdmZip from "adm-zip";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
+import type AdmZipType from "adm-zip";
+import { collectPackageFiles } from "./package_manifest.js";
+import { loadRuntimeDependency } from "./runtime-deps.js";
+import { validateAgentPluginSchema } from "./validate_agent_plugin_schema.js";
+import { validate } from "./validate_goose_plugin.js";
 
-const HERE = dirname(fileURLToPath(import.meta.url));
+const AdmZip = loadRuntimeDependency<typeof AdmZipType>("adm-zip");
 
-const EXCLUDED_PARTS = new Set([".git", ".hg", ".svn", "__pycache__", "node_modules"]);
-const EXCLUDED_SUFFIXES = new Set([".pyc", ".pyo"]);
-
-function isDir(path: string): boolean {
-  try {
-    return statSync(path).isDirectory();
-  } catch {
-    return false;
-  }
+function isDirectory(path: string): boolean {
+  try { return statSync(path).isDirectory(); } catch { return false; }
 }
 
-function shouldExclude(path: string, root: string): boolean {
-  const relative = path.slice(root.length + 1);
-  const parts = relative.split(/[\\/]/);
-  if (parts.some((p) => EXCLUDED_PARTS.has(p))) return true;
-  const suffix = path.includes(".") ? path.slice(path.lastIndexOf(".")) : "";
-  return EXCLUDED_SUFFIXES.has(suffix);
-}
-
-function collectFiles(root: string, current: string, out: string[]) {
-  for (const entry of readdirSync(current).sort()) {
-    const full = join(current, entry);
-    if (isDir(full)) {
-      collectFiles(root, full, out);
-    } else {
-      out.push(full);
+function validateOfflineSkills(root: string): string[] {
+  const skillsRoot = join(root, "skills");
+  if (!isDirectory(skillsRoot)) return [];
+  const missing: string[] = [];
+  for (const skill of readdirSync(skillsRoot).sort()) {
+    const skillRoot = join(skillsRoot, skill);
+    const packagePath = join(skillRoot, "package.json");
+    if (!isDirectory(skillRoot) || !existsSync(packagePath)) continue;
+    const pkg = JSON.parse(readFileSync(packagePath, "utf8"));
+    if (!pkg.offlineBundle) continue;
+    if (!isDirectory(join(skillRoot, "dist"))) missing.push(`skills/${skill}/dist/`);
+    if (!existsSync(join(skillRoot, "vendor", "manifest.json"))) missing.push(`skills/${skill}/vendor/manifest.json`);
+    if (!existsSync(join(skillRoot, "THIRD_PARTY_NOTICES.md"))) missing.push(`skills/${skill}/THIRD_PARTY_NOTICES.md`);
+    for (const dependency of Object.keys(pkg.dependencies ?? {})) {
+      if (!isDirectory(join(skillRoot, "vendor", "node_modules", dependency))) missing.push(`skills/${skill}/vendor/node_modules/${dependency}`);
     }
   }
+  return missing;
 }
 
-function main() {
+function fail(message: string): never { console.error("ERROR: " + message); process.exit(1); }
+
+function main(): void {
   const [pluginDirArg, outputArg] = process.argv.slice(2);
-  if (!pluginDirArg) {
-    console.error("usage: package_goose_plugin.js <plugin_dir> [output.zip]");
-    process.exit(2);
-  }
-
+  if (!pluginDirArg) { console.error("usage: package_goose_plugin.js <plugin_dir> [output.zip]"); process.exit(2); }
   const root = resolve(pluginDirArg);
-  const validator = join(HERE, "validate_goose_plugin.js");
-  execFileSync("node", [validator, root], { stdio: "inherit" });
+  if (!isDirectory(root) || lstatSync(root).isSymbolicLink()) fail("plugin root must be a real directory");
 
-  const output = outputArg
-    ? resolve(outputArg)
-    : join(dirname(root), `${basename(root)}.zip`);
+  const missing = validateOfflineSkills(root);
+  if (missing.length) fail("Offline bundle is incomplete: " + missing.join(", "));
+  const schema = validateAgentPluginSchema(root);
+  if (!schema.valid) { for (const error of schema.errors) console.error(`SCHEMA ERROR: ${error.path}: ${error.message}`); process.exit(1); }
+  const operational = validate(root);
+  for (const warning of operational.warnings) console.error("WARNING: " + warning);
+  if (operational.errors.length) { for (const error of operational.errors) console.error("ERROR: " + error); process.exit(1); }
+
+  const output = outputArg ? resolve(outputArg) : join(dirname(root), basename(root) + ".zip");
   mkdirSync(dirname(output), { recursive: true });
-
-  const files: string[] = [];
-  collectFiles(root, root, files);
-
+  if (existsSync(output) && lstatSync(output).isSymbolicLink()) fail("archive output cannot be a symbolic link");
+  let files;
+  try { files = collectPackageFiles(root, [output]); } catch (error) { fail((error as Error).message); }
+  const manifest = JSON.parse(readFileSync(join(root, "plugin.json"), "utf8"));
   const zip = new AdmZip();
-  const rootName = basename(root);
-  for (const path of files) {
-    if (shouldExclude(path, root) || resolve(path) === output) continue;
-    const relative = path.slice(root.length + 1);
-    const arcname = join(rootName, relative);
-    zip.addLocalFile(path, dirname(arcname));
-  }
+  for (const file of files) zip.addFile(manifest.name + "/" + file.relative, readFileSync(file.absolute));
   zip.writeZip(output);
   console.log(output);
 }

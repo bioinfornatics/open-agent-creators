@@ -5,6 +5,11 @@ description: Create, edit, validate, test, and install Goose custom agent defini
 
 # Agent Creator
 
+## Offline runtime
+
+Released distributions include compiled scripts and production dependencies under `vendor/node_modules`. Run scripts from `dist/`; consumer machines need Node.js but must not run `npm install` or require network access. A missing vendor dependency is a packaging defect: report it and rebuild with the repository's `scripts/prepare-offline-bundle.mjs`.
+
+
 Create focused Goose custom agents that define **who Goose should be** for a task. Keep generated files under `.agents/agents/` for project scope or `~/.agents/agents/` for user scope.
 
 ## Scope boundary
@@ -23,7 +28,7 @@ A custom agent does not define extensions, MCP servers, scheduled jobs, recipe p
 
 `agent-creator` works standalone for its normal case: an agent under `.agents/agents/` (project) or `~/.agents/agents/` (user). Current Goose custom agents are discovered from `.agents/agents`, not from inside a plugin — most requests never need `plugin-creator` at all.
 
-Depend on `open-agent-creators:plugin-creator` (fallback: standalone `plugin-creator`) only when:
+Depend on `agent-plugins:plugin-creator` (fallback: standalone `plugin-creator`) only when:
 
 | When | Why | Success criteria before returning to plugin work |
 |---|---|---|
@@ -37,6 +42,10 @@ If `plugin-creator` is unavailable and one of these cases applies, state the lim
 Read `references/custom-agents.md` before creating or modifying an agent. It is a vendored snapshot of Goose's `guides/context-engineering/custom-agents` documentation and defines the supported format, paths, discovery behavior, and usage model.
 
 When changing this creator, compare that reference with the current Goose documentation and implementation. Record the upstream revision or refresh date in `references/UPSTREAM.md` whenever the snapshot is updated.
+
+## Unified CLI
+
+Prefer the bundled **agent-creator** executable (or node <agent-creator>/dist/scripts/cli.js) for automation. It provides init, validate, evaluate, grade, aggregate, and install while preserving the legacy script entrypoints. Common flags are --format text|json, --quiet, and --help; exit statuses are 0 success, 1 failure, 2 usage, and 3 blocked operation.
 
 ## Workflow
 

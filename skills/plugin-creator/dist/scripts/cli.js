@@ -1,0 +1,63 @@
+#!/usr/bin/env node
+import { spawnSync } from "node:child_process";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { validate } from "./validate_goose_plugin.js";
+import { validateAgentPluginSchema } from "./validate_agent_plugin_schema.js";
+export const EXIT_SUCCESS = 0, EXIT_FAILURE = 1, EXIT_USAGE = 2, EXIT_BLOCKED = 3;
+const HERE = dirname(fileURLToPath(import.meta.url));
+const HELP = "Usage: plugin-creator <init|validate|verify|package> [options]\n\nCommon options:\n  --format text|json  Output format (default: text)\n  --quiet             Suppress normal output\n  --help              Show help\n\nExit codes: 0 success, 1 failure, 2 usage, 3 blocked.";
+function parseCommon(args) { let format = "text", quiet = false, help = false; const rest = []; for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === "--quiet" || a === "-q")
+        quiet = true;
+    else if (a === "--help" || a === "-h")
+        help = true;
+    else if (a === "--format") {
+        const v = args[++i];
+        if (v !== "text" && v !== "json")
+            return "--format must be text or json";
+        format = v;
+    }
+    else if (a.startsWith("--format=")) {
+        const v = a.slice(9);
+        if (v !== "text" && v !== "json")
+            return "--format must be text or json";
+        format = v;
+    }
+    else
+        rest.push(a);
+} return { format, quiet, help, args: rest }; }
+function emit(value, text, o) { if (!o.quiet)
+    console.log(o.format === "json" ? JSON.stringify(value, null, 2) : text); }
+function usage(message) { if (message)
+    console.error(message); console.error(HELP); return EXIT_USAGE; }
+function child(script, args) { return spawnSync(process.execPath, [join(HERE, script), ...args], { encoding: "utf8" }); }
+function wrapped(command, o) { if (!o.args.length)
+    return usage(command + " requires a target"); const r = child(command === "init" ? "init_goose_plugin.js" : "package_goose_plugin.js", o.args), out = (r.stdout ?? "").trim(), err = (r.stderr ?? "").trim(), code = r.status ?? 1; if (code) {
+    console.error(err || out);
+    return code === 2 ? 2 : 1;
+} const output = out.split(/\r?\n/).filter(Boolean).at(-1) ?? ""; emit({ ok: true, command, output }, output, o); return 0; }
+function runValidate(o) { if (o.args.length !== 1)
+    return usage("validate requires exactly one plugin directory"); const target = resolve(o.args[0]), schema = validateAgentPluginSchema(target), structural = validate(target), ok = schema.valid && !structural.errors.length; const lines = [...schema.documents.map(d => (d.valid ? "VALID: " : "INVALID: ") + d.file + " (" + d.type + ")"), ...schema.errors.map(e => "SCHEMA ERROR: " + e.path + ": " + e.message), ...structural.warnings.map(w => "WARNING: " + w), ...structural.errors.map(e => "ERROR: " + e), ...(ok ? ["OK: " + target] : [])]; emit({ ok, command: "validate", target, schema, structural }, lines.join("\n"), o); return ok ? 0 : 1; }
+function runVerify(o) { if (!o.args.length)
+    return usage("verify requires a plugin directory"); const r = child("verify_plugin_gates.js", o.args), raw = (r.stdout ?? "").trim(); let receipt; try {
+    receipt = JSON.parse(raw);
+}
+catch {
+    console.error((r.stderr ?? raw).trim());
+    return r.status === 2 ? 2 : 1;
+} emit(receipt, "Plugin " + receipt.name + ": " + String(receipt.status).toUpperCase() + " (" + receipt.profile + ")", o); return receipt.status === "pass" ? 0 : receipt.status === "blocked" ? 3 : 1; }
+export function runCli(argv) { const [command, ...raw] = argv; if (!command || command === "--help" || command === "-h") {
+    console.log(HELP);
+    return 0;
+} if (!["init", "validate", "verify", "package"].includes(command))
+    return usage("Unknown command: " + command); const o = parseCommon(raw); if (typeof o === "string")
+    return usage(o); if (o.help) {
+    console.log(HELP);
+    return 0;
+} if (command === "validate")
+    return runValidate(o); if (command === "verify")
+    return runVerify(o); return wrapped(command, o); }
+if (process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1]))
+    process.exitCode = runCli(process.argv.slice(2));

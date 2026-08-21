@@ -1,5 +1,5 @@
+*.skill
 *.zip
 .DS_Store
-node_modules/
-dist/
-package-lock.json
+/node_modules/
+/package-lock.json

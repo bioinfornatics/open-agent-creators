@@ -1,0 +1,9 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { MCP_SCHEMA_ID, PLUGIN_SCHEMA_ID, validateAgentPluginSchema } from "../dist/scripts/validate_agent_plugin_schema.js";
+test("validates canonical manifest and MCP schemas",()=>{const tmp=mkdtempSync(join(tmpdir(),"schema-validator-"));try{writeFileSync(join(tmp,"plugin.json"),JSON.stringify({$schema:PLUGIN_SCHEMA_ID,name:"demo-plugin",version:"1.0.0"}));writeFileSync(join(tmp,"mcp.json"),JSON.stringify({$schema:MCP_SCHEMA_ID,mcpServers:{local:{type:"stdio",command:"node",args:["server.js"]},remote:{type:"streamable-http",url:"https://example.test/mcp"}}}));const r=validateAgentPluginSchema(tmp);assert.equal(r.valid,true);assert.equal(r.documents.length,2);}finally{rmSync(tmp,{recursive:true,force:true});}});
+test("reports all schema errors",()=>{const tmp=mkdtempSync(join(tmpdir(),"schema-validator-"));try{writeFileSync(join(tmp,"plugin.json"),JSON.stringify({name:"Bad--Name",unknown:true}));const r=validateAgentPluginSchema(tmp);assert.equal(r.valid,false);assert.ok(r.errors.some(e=>e.keyword==="required"));assert.ok(r.errors.some(e=>e.keyword==="additionalProperties"));}finally{rmSync(tmp,{recursive:true,force:true});}});
+test("rejects reserved MCP environment variables",()=>{const tmp=mkdtempSync(join(tmpdir(),"schema-validator-"));try{writeFileSync(join(tmp,"mcp.json"),JSON.stringify({$schema:MCP_SCHEMA_ID,mcpServers:{local:{type:"stdio",command:"node",env:{PLUGIN_ROOT:"bad"}}}}));const r=validateAgentPluginSchema(join(tmp,"mcp.json"));assert.equal(r.valid,false);assert.ok(r.errors.some(e=>JSON.stringify(e.params).includes("PLUGIN_ROOT")));}finally{rmSync(tmp,{recursive:true,force:true});}});
