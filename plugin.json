@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "agent-plugins",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Open-format-first creators for Agent Skills, custom agents, hooks, and plugins"
 }
